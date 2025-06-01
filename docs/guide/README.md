@@ -56,7 +56,7 @@ Welcome to the comprehensive documentation for SAFLA (Self-Aware Feedback Loop A
 - [**33. FAQ**](33-faq.md) - Frequently asked questions
 - [**34. Migration Guide**](34-migration.md) - Version migration and upgrade guides
 - [**35. Contributing**](35-contributing.md) - Contributing guidelines and development standards
-
+- [**36. Changelog**](36-changelog.md) - Version history and release notes
 ## 🎯 Documentation Levels
 
 This documentation is designed to serve users at different levels:
