@@ -22,11 +22,11 @@ Welcome to the comprehensive documentation for SAFLA (Self-Aware Feedback Loop A
 - [**11. Context Sharing**](11-context-sharing.md) - Vector embedding-based context propagation
 
 ### Advanced Features
+### Advanced Features
 - [**12. Memory Consolidation**](12-memory-consolidation.md) - Automated transfer between memory types
 - [**13. Performance Monitoring**](13-performance-monitoring.md) - Real-time performance tracking and optimization
 - [**14. Adaptive Learning**](14-adaptive-learning.md) - Continuous learning and self-modification
-- [**15. Strategy Selection**](15-strategy-selection.md) - Context-aware strategy optimization
-
+- [**15. Performance Optimization**](15-performance.md) - Comprehensive benchmarking framework and performance optimization
 ### Configuration & Deployment
 - [**16. Configuration Guide**](16-configuration.md) - Environment variables and system configuration
 - [**17. Deployment Strategies**](17-deployment.md) - Production deployment patterns and best practices

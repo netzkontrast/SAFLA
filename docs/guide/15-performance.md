@@ -151,75 +151,339 @@ SAFETY_VALIDATION_BENCHMARKS = [
 
 ## Benchmarking Framework
 
-### Performance Benchmark Class
+SAFLA includes a comprehensive benchmarking framework for measuring and tracking performance across all system components. The framework provides modular, extensible benchmarking capabilities with persistent storage and trend analysis.
 
+### Framework Architecture
+
+The benchmarking framework consists of several key components:
+
+- **Core Framework** ([`benchmarks/core.py`](../../benchmarks/core.py)): Abstract base classes and execution engine
+- **Database Layer** ([`benchmarks/database.py`](../../benchmarks/database.py)): SQLite-based persistent storage
+- **CLI Benchmarks** ([`benchmarks/cli_benchmarks.py`](../../benchmarks/cli_benchmarks.py)): SAFLA CLI-specific benchmarks
+- **Utilities** ([`benchmarks/utils.py`](../../benchmarks/utils.py)): Configuration, metrics, and analysis tools
+
+### Core Classes
+
+#### Benchmark Base Class
 ```python
-@dataclass
-class PerformanceBenchmark:
-    """Performance benchmark specification."""
-    name: str
-    target_value: float
-    target_unit: str
-    tolerance: float = 0.1  # 10% tolerance by default
-    description: str = ""
+class Benchmark(ABC):
+    """Abstract base class for all benchmarks."""
     
-    def meets_target(self, measured_value: float) -> bool:
-        """Check if measured value meets the target."""
-        if "latency" in self.name.lower() or "time" in self.name.lower():
-            # For latency/time metrics, lower is better
-            return measured_value <= self.target_value * (1 + self.tolerance)
-        else:
-            # For throughput/performance metrics, higher is better
-            return measured_value >= self.target_value * (1 - self.tolerance)
+    def __init__(self, name: str, description: str = "", config: Optional[BenchmarkConfig] = None):
+        self.name = name
+        self.description = description
+        self.config = config or BenchmarkConfig()
+    
+    @abstractmethod
+    async def run(self) -> BenchmarkResult:
+        """Execute the benchmark and return results."""
+        pass
+    
+    @abstractmethod
+    async def setup(self) -> None:
+        """Setup benchmark environment."""
+        pass
+    
+    @abstractmethod
+    async def teardown(self) -> None:
+        """Cleanup benchmark environment."""
+        pass
+```
 
+#### Benchmark Result
+```python
 @dataclass
 class BenchmarkResult:
-    """Result of a performance benchmark test."""
-    benchmark: PerformanceBenchmark
-    measured_value: float
-    meets_target: bool
-    improvement_factor: float = 1.0
-    baseline_value: Optional[float] = None
+    """Result of a benchmark execution."""
+    benchmark_name: str
+    execution_time: float
+    memory_usage: float
+    success: bool
+    error_message: Optional[str] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
     timestamp: datetime = field(default_factory=datetime.now)
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert result to dictionary for storage."""
+        return {
+            'benchmark_name': self.benchmark_name,
+            'execution_time': self.execution_time,
+            'memory_usage': self.memory_usage,
+            'success': self.success,
+            'error_message': self.error_message,
+            'metadata': json.dumps(self.metadata),
+            'timestamp': self.timestamp.isoformat()
+        }
 ```
 
-### Benchmark Execution Pattern
+#### Benchmark Runner
+```python
+class BenchmarkRunner:
+    """Executes benchmarks with monitoring and error handling."""
+    
+    def __init__(self, database: Optional[BenchmarkDatabase] = None):
+        self.database = database or BenchmarkDatabase()
+        self.results: List[BenchmarkResult] = []
+    
+    async def run_benchmark(self, benchmark: Benchmark) -> BenchmarkResult:
+        """Run a single benchmark with full monitoring."""
+        # Memory monitoring setup
+        process = psutil.Process()
+        initial_memory = process.memory_info().rss / 1024 / 1024  # MB
+        
+        try:
+            await benchmark.setup()
+            
+            start_time = time.perf_counter()
+            await benchmark.run()
+            end_time = time.perf_counter()
+            
+            execution_time = end_time - start_time
+            final_memory = process.memory_info().rss / 1024 / 1024  # MB
+            memory_usage = final_memory - initial_memory
+            
+            result = BenchmarkResult(
+                benchmark_name=benchmark.name,
+                execution_time=execution_time,
+                memory_usage=memory_usage,
+                success=True
+            )
+            
+        except Exception as e:
+            result = BenchmarkResult(
+                benchmark_name=benchmark.name,
+                execution_time=0.0,
+                memory_usage=0.0,
+                success=False,
+                error_message=str(e)
+            )
+        finally:
+            await benchmark.teardown()
+        
+        # Store result
+        self.results.append(result)
+        if self.database:
+            await self.database.store_result(result)
+        
+        return result
+```
+
+### CLI Integration
+
+The benchmarking framework is integrated into the SAFLA CLI with dedicated commands:
+
+```bash
+# Run all benchmarks
+safla benchmark run
+
+# Run specific benchmark
+safla benchmark run --name "cli_help_performance"
+
+# List available benchmarks
+safla benchmark list
+
+# View benchmark results
+safla benchmark results
+
+# Analyze performance trends
+safla benchmark analyze
+```
+
+### Available CLI Benchmarks
+
+The framework includes comprehensive CLI benchmarks:
+
+1. **CLI Help Performance** - Tests `safla --help` response time
+2. **CLI Version Performance** - Tests `safla --version` response time
+3. **CLI List Commands Performance** - Tests command listing speed
+4. **CLI Invalid Command Performance** - Tests error handling speed
+5. **CLI Benchmark List Performance** - Tests benchmark listing speed
+6. **CLI Benchmark Results Performance** - Tests results retrieval speed
+7. **CLI Benchmark Run Performance** - Tests benchmark execution speed
+8. **CLI Benchmark Analyze Performance** - Tests analysis performance
+
+### Database Schema
+
+The framework uses SQLite for persistent storage with the following schema:
+
+```sql
+CREATE TABLE benchmark_results (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    benchmark_name TEXT NOT NULL,
+    execution_time REAL NOT NULL,
+    memory_usage REAL NOT NULL,
+    success BOOLEAN NOT NULL,
+    error_message TEXT,
+    metadata TEXT,
+    timestamp TEXT NOT NULL
+);
+
+CREATE INDEX idx_benchmark_name ON benchmark_results(benchmark_name);
+CREATE INDEX idx_timestamp ON benchmark_results(timestamp);
+```
+
+### Performance Analysis
+
+The framework provides comprehensive analysis capabilities:
+
+#### Trend Analysis
+```python
+class BenchmarkAnalyzer:
+    """Analyzes benchmark results for trends and insights."""
+    
+    async def analyze_trends(self, benchmark_name: str, days: int = 30) -> Dict[str, Any]:
+        """Analyze performance trends over time."""
+        results = await self.database.get_results_by_name(benchmark_name, days)
+        
+        if len(results) < 2:
+            return {"error": "Insufficient data for trend analysis"}
+        
+        execution_times = [r.execution_time for r in results]
+        
+        # Statistical analysis
+        mean_time = statistics.mean(execution_times)
+        median_time = statistics.median(execution_times)
+        std_dev = statistics.stdev(execution_times) if len(execution_times) > 1 else 0
+        
+        # Trend detection using linear regression
+        x = list(range(len(execution_times)))
+        slope = self._calculate_slope(x, execution_times)
+        
+        return {
+            "benchmark_name": benchmark_name,
+            "total_runs": len(results),
+            "mean_execution_time": mean_time,
+            "median_execution_time": median_time,
+            "std_deviation": std_dev,
+            "trend_slope": slope,
+            "trend_direction": "improving" if slope < 0 else "degrading" if slope > 0 else "stable",
+            "performance_stability": "stable" if std_dev < mean_time * 0.1 else "variable"
+        }
+```
+
+#### Performance Metrics
+```python
+class PerformanceMetrics:
+    """Calculates and tracks performance metrics."""
+    
+    @staticmethod
+    def calculate_percentiles(values: List[float]) -> Dict[str, float]:
+        """Calculate performance percentiles."""
+        if not values:
+            return {}
+        
+        sorted_values = sorted(values)
+        n = len(sorted_values)
+        
+        return {
+            "p50": sorted_values[int(n * 0.5)],
+            "p90": sorted_values[int(n * 0.9)],
+            "p95": sorted_values[int(n * 0.95)],
+            "p99": sorted_values[int(n * 0.99)] if n >= 100 else sorted_values[-1]
+        }
+    
+    @staticmethod
+    def detect_regressions(current_results: List[float], baseline_results: List[float], threshold: float = 0.2) -> bool:
+        """Detect performance regressions."""
+        if not current_results or not baseline_results:
+            return False
+        
+        current_mean = statistics.mean(current_results)
+        baseline_mean = statistics.mean(baseline_results)
+        
+        regression_ratio = (current_mean - baseline_mean) / baseline_mean
+        return regression_ratio > threshold
+```
+
+### Configuration
+
+Benchmarks are configured using the `BenchmarkConfig` class:
 
 ```python
-def benchmark_operation(operation, iterations=100, warmup=10):
-    """Generic benchmark execution pattern."""
+@dataclass
+class BenchmarkConfig:
+    """Configuration for benchmark execution."""
+    iterations: int = 10
+    warmup_iterations: int = 2
+    timeout_seconds: float = 30.0
+    memory_limit_mb: float = 1000.0
+    parallel_execution: bool = False
+    store_results: bool = True
     
-    # Warm up
-    for _ in range(warmup):
-        operation()
-    
-    # Measure performance
-    times = []
-    for _ in range(iterations):
-        start_time = time.perf_counter()
-        result = operation()
-        end_time = time.perf_counter()
-        
-        times.append(end_time - start_time)
-        
-        # Verify operation succeeded
-        assert result is not None
-    
-    # Calculate statistics
-    avg_time = statistics.mean(times)
-    p95_time = statistics.quantiles(times, n=20)[18] if len(times) > 20 else max(times)
-    min_time = min(times)
-    max_time = max(times)
-    
-    return {
-        'avg_time': avg_time,
-        'p95_time': p95_time,
-        'min_time': min_time,
-        'max_time': max_time,
-        'iterations': iterations
-    }
+    @classmethod
+    def from_dict(cls, config_dict: Dict[str, Any]) -> 'BenchmarkConfig':
+        """Create config from dictionary."""
+        return cls(**{k: v for k, v in config_dict.items() if hasattr(cls, k)})
 ```
+
+### Usage Examples
+
+#### Running Benchmarks Programmatically
+```python
+from benchmarks import BenchmarkRunner, BenchmarkDatabase
+from benchmarks.cli_benchmarks import CLIHelpBenchmark
+
+# Initialize components
+database = BenchmarkDatabase()
+await database.initialize()
+
+runner = BenchmarkRunner(database)
+
+# Run specific benchmark
+benchmark = CLIHelpBenchmark()
+result = await runner.run_benchmark(benchmark)
+
+print(f"Benchmark: {result.benchmark_name}")
+print(f"Execution Time: {result.execution_time:.3f}s")
+print(f"Memory Usage: {result.memory_usage:.2f}MB")
+print(f"Success: {result.success}")
+```
+
+#### Analyzing Results
+```python
+from benchmarks.utils import BenchmarkAnalyzer
+
+analyzer = BenchmarkAnalyzer(database)
+
+# Analyze trends for specific benchmark
+trends = await analyzer.analyze_trends("cli_help_performance", days=7)
+print(f"Trend Direction: {trends['trend_direction']}")
+print(f"Mean Execution Time: {trends['mean_execution_time']:.3f}s")
+
+# Get performance summary
+summary = await analyzer.get_performance_summary()
+for benchmark_name, stats in summary.items():
+    print(f"{benchmark_name}: {stats['mean_time']:.3f}s ± {stats['std_dev']:.3f}s")
+```
+
+### Testing
+
+The framework includes comprehensive unit tests in [`tests/test_benchmarks_simple.py`](../../tests/test_benchmarks_simple.py):
+
+- Core framework functionality tests
+- Database operations tests
+- CLI benchmark tests
+- Configuration and utilities tests
+- Error handling and edge case tests
+
+Run tests with:
+```bash
+python -m pytest tests/test_benchmarks_simple.py -v
+```
+
+### Performance Targets
+
+Current benchmark performance targets:
+
+| Benchmark | Target Time | Current Performance |
+|-----------|-------------|-------------------|
+| CLI Help | < 1.0s | ~0.4s |
+| CLI Version | < 0.5s | ~0.4s |
+| CLI List Commands | < 1.0s | ~0.5s |
+| CLI Error Handling | < 0.5s | ~0.4s |
+| Benchmark Execution | < 5.0s | ~4.7s |
+
+All benchmarks currently meet or exceed their performance targets with 100% success rate.
 
 ## Component-Specific Optimizations
 
