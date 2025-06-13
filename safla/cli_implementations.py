@@ -270,6 +270,57 @@ def _get_system_uptime() -> str:
         return "unknown"
 
 
+def _get_performance_summary() -> Dict[str, Any]:
+    """Get system performance summary."""
+    try:
+        # Get CPU metrics
+        cpu_percent = psutil.cpu_percent(interval=0.1)
+        cpu_count = psutil.cpu_count()
+        
+        # Get memory metrics
+        memory = psutil.virtual_memory()
+        swap = psutil.swap_memory()
+        
+        # Get disk I/O metrics
+        disk_io = psutil.disk_io_counters()
+        
+        # Get network I/O metrics
+        net_io = psutil.net_io_counters()
+        
+        return {
+            'cpu': {
+                'usage_percent': cpu_percent,
+                'core_count': cpu_count,
+                'load_average': os.getloadavg() if hasattr(os, 'getloadavg') else [0, 0, 0]
+            },
+            'memory': {
+                'usage_percent': memory.percent,
+                'available_gb': memory.available / (1024**3),
+                'cached_gb': memory.cached / (1024**3) if hasattr(memory, 'cached') else 0,
+                'swap_usage_percent': swap.percent
+            },
+            'io': {
+                'disk_read_mb_s': disk_io.read_bytes / (1024**2) if disk_io else 0,
+                'disk_write_mb_s': disk_io.write_bytes / (1024**2) if disk_io else 0,
+                'network_recv_mb_s': net_io.bytes_recv / (1024**2) if net_io else 0,
+                'network_sent_mb_s': net_io.bytes_sent / (1024**2) if net_io else 0
+            },
+            'processes': {
+                'total': len(psutil.pids()),
+                'running': len([p for p in psutil.process_iter(['status']) if p.info['status'] == psutil.STATUS_RUNNING])
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error getting performance summary: {e}")
+        return {
+            'error': str(e),
+            'cpu': {'usage_percent': 0},
+            'memory': {'usage_percent': 0},
+            'io': {},
+            'processes': {'total': 0}
+        }
+
+
 # =============================================================================
 # COMPONENT MANAGEMENT FUNCTIONS
 # =============================================================================
