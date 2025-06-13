@@ -113,19 +113,19 @@ class TestFastMCPServer:
     @pytest.fixture
     def server(self, mock_fastmcp_server):
         """Create FastMCP server wrapper."""
-        with patch('****', True):
+        with patch('safla.integrations.fastmcp_server.FASTMCP_AVAILABLE', True):
             with patch('fastmcp.FastMCP', return_value=mock_fastmcp_server):
                 return FastMCPServer("test_server")
     
     def test_server_creation_without_fastmcp(self):
         """Test server creation when FastMCP is not available."""
-        with patch('****', False):
+        with patch('safla.integrations.fastmcp_server.FASTMCP_AVAILABLE', False):
             with pytest.raises(SAFLAError, match="FastMCP is not available"):
                 FastMCPServer("test_server")
     
     def test_server_creation_with_fastmcp(self, mock_fastmcp_server):
         """Test server creation when FastMCP is available."""
-        with patch('****', True):
+        with patch('safla.integrations.fastmcp_server.FASTMCP_AVAILABLE', True):
             with patch('fastmcp.FastMCP', return_value=mock_fastmcp_server):
                 server = FastMCPServer("test_server")
                 assert server.name == "test_server"
@@ -304,18 +304,18 @@ class TestFastMCPServerBuilder:
     @pytest.fixture
     def builder(self):
         """Create FastMCP server builder."""
-        with patch('****', True):
+        with patch('safla.integrations.fastmcp_server.FASTMCP_AVAILABLE', True):
             return FastMCPServerBuilder("test_server")
     
     def test_builder_creation_without_fastmcp(self):
         """Test builder creation when FastMCP is not available."""
-        with patch('****', False):
+        with patch('safla.integrations.fastmcp_server.FASTMCP_AVAILABLE', False):
             with pytest.raises(SAFLAError, match="FastMCP is not available"):
                 FastMCPServerBuilder("test_server")
     
     def test_builder_creation_with_fastmcp(self):
         """Test builder creation when FastMCP is available."""
-        with patch('****', True):
+        with patch('safla.integrations.fastmcp_server.FASTMCP_AVAILABLE', True):
             builder = FastMCPServerBuilder("test_server")
             assert builder.name == "test_server"
             assert builder._tools == []

@@ -23,23 +23,16 @@ from enum import Enum
 
 # Import the classes we'll implement
 from safla.core.auto_scaling_infrastructure import (
-    AutoScalingManager,
-    ResourceAllocator,
-    ScalingPredictor,
-    CostOptimizer,
-    PerformanceMonitor,
-    ScalingPolicy,
-    ResourcePool,
-    ScalingConfig,
-    ScalingAction,
+    AutoScalingInfrastructure,
+    ScalingDirection,
     ResourceType,
-    ScalingTrigger,
+    ScalingPolicy,
     ResourceMetrics,
-    ScalingDecision,
-    CostModel,
-    PerformanceTarget,
-    ScalingStrategy,
-    LoadBalancer
+    ScalingRule,
+    ScalingEvent,
+    Instance,
+    LoadBalancer,
+    PerformanceOptimizer
 )
 
 
@@ -130,8 +123,8 @@ class TestAutoScalingManager:
     
     @pytest.fixture
     def auto_scaling_manager(self, scaling_config):
-        """Create AutoScalingManager instance for testing."""
-        return AutoScalingManager(config=scaling_config)
+        """Create AutoScalingInfrastructure instance for testing."""
+        return AutoScalingInfrastructure(config=scaling_config)
     
     @pytest.fixture
     def mock_resource_metrics(self):
@@ -172,7 +165,7 @@ class TestAutoScalingManager:
         ]
     
     def test_auto_scaling_manager_initialization(self, auto_scaling_manager, scaling_config):
-        """Test AutoScalingManager initialization."""
+        """Test AutoScalingInfrastructure initialization."""
         assert auto_scaling_manager.config == scaling_config
         assert auto_scaling_manager.resource_allocator is not None
         assert auto_scaling_manager.scaling_predictor is not None

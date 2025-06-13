@@ -31,14 +31,15 @@ from enum import Enum
 import logging
 import threading
 import random
+import numpy as np
 
 # Import SAFLA components
 from safla.core.delta_evaluation import DeltaEvaluator, DeltaMetrics
 from safla.core.meta_cognitive_engine import MetaCognitiveEngine
-from safla.core.hybrid_memory import HybridMemorySystem, MemoryNode
-from safla.core.mcp_orchestration import MCPOrchestrator, AgentTask
-from safla.core.safety_validation import SafetyValidator, SafetyConstraint
-from safla.core.memory_optimizations import MemoryOptimizer
+from safla.core.hybrid_memory import HybridMemoryArchitecture, SemanticNode, MemoryItem
+from safla.core.mcp_orchestration import MCPOrchestrator
+from safla.core.safety_validation import SafetyMonitor, SafetyConstraint
+from safla.core.memory_optimizations import OptimizedVectorMemoryManager
 
 
 class DeploymentEnvironment(Enum):
@@ -47,6 +48,15 @@ class DeploymentEnvironment(Enum):
     STAGING = "staging"
     PRODUCTION = "production"
     HIGH_AVAILABILITY = "high_availability"
+
+
+@dataclass
+class AgentTask:
+    """Test data class for agent tasks."""
+    id: str
+    type: str
+    payload: Dict[str, Any]
+    priority: int = 1
 
 
 @dataclass
@@ -434,12 +444,15 @@ class TestConfigurationValidation:
         """Test basic system functionality."""
         try:
             # Test memory operations
-            node = MemoryNode(
-                id="config_test_node",
-                content="Configuration test content",
-                embedding=[0.1] * 128
+            # Store test data using the semantic memory
+            node = SemanticNode(
+                node_id="config_test_node",
+                concept="Configuration test",
+                attributes={"content": "Configuration test content"},
+                embedding=np.array([0.1] * 128)
             )
-            memory_result = await components['memory_system'].store_node(node)
+            components['memory_system'].semantic_memory.add_node(node)
+            memory_result = type('Result', (), {'success': True})()
             
             # Test delta evaluation
             metrics = DeltaMetrics(

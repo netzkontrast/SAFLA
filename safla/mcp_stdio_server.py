@@ -24,6 +24,17 @@ from safla.utils.config import SAFLAConfig, get_config
 from safla.utils.logging import setup_logging, get_logger
 from safla.utils.validation import validate_installation, validate_config, check_gpu_availability
 from safla.exceptions import SAFLAError
+from safla.auth import JWTManager, AuthMiddleware, AuthenticationError
+from safla.auth.jwt_manager import JWTConfig
+from safla.utils.state_manager import StateManager
+from safla.mcp.handlers.auth_handler import AuthHandler
+from safla.validation import (
+    MCPRequest, ToolCallRequest, ResourceReadRequest,
+    DeployRequest, BackupRequest, BenchmarkRequest,
+    validate_path, validate_tool_name, sanitize_error_message
+)
+from safla.middleware import RateLimiter, RateLimitConfig
+from safla.mcp.handler_registry import get_registry
 
 
 logger = get_logger(__name__)
@@ -55,6 +66,31 @@ class SAFLAMCPServer:
         self.start_time = time.time()
         self.benchmark_results = {}
         self.agent_sessions = {}
+        
+        # Initialize JWT authentication
+        try:
+            jwt_config = JWTConfig()
+            self.jwt_manager = JWTManager(jwt_config)
+            self.auth_middleware = AuthMiddleware(self.jwt_manager)
+            self.auth_enabled = True
+            
+            # Initialize state manager and auth handler
+            self.state_manager = StateManager()
+            self.auth_handler = AuthHandler(self.jwt_manager, self.state_manager)
+            
+            logger.info("JWT authentication enabled")
+        except ValueError as e:
+            logger.warning(f"JWT authentication disabled: {e}")
+            self.jwt_manager = None
+            self.auth_middleware = None
+            self.auth_enabled = False
+            self.state_manager = None
+            self.auth_handler = None
+        
+        # Initialize rate limiter
+        rate_limit_config = RateLimitConfig()
+        self.rate_limiter = RateLimiter(rate_limit_config)
+        logger.info("Rate limiting enabled")
         
         # Meta-Cognitive Engine State
         self.meta_cognitive_state = {
@@ -93,7 +129,8 @@ class SAFLAMCPServer:
         }
         self.learning_metrics = {
             "accuracy": 0.85,
-            "adaptation_rate": 0.72,
+            "adaptation_threshold": 0.72,
+            "memory_retention": 0.89,
             "knowledge_retention": 0.89,
             "learning_rate": 0.15,
             "exploration_factor": 0.25,
@@ -119,18 +156,59 @@ class SAFLAMCPServer:
                 if hasattr(handler, 'stream') and handler.stream == sys.stdout:
                     handler.stream = sys.stderr
             logger.info("SAFLA MCP Server initialized with comprehensive tools")
+            
+            # Start rate limiter cleanup task
+            await self.rate_limiter.start_cleanup_task()
+            
+            # Initialize handler registry
+            self.handler_registry = get_registry()
+            self._register_handlers()
         except Exception as e:
             print(f"Failed to initialize SAFLA MCP Server: {e}", file=sys.stderr)
             raise
     
     async def handle_request(self, request: Dict[str, Any]) -> Dict[str, Any]:
         """Handle incoming MCP requests"""
-        method = request.get("method")
-        params = request.get("params", {})
-        request_id = request.get("id")
-        
         try:
-            if method == "initialize":
+            # Validate request structure
+            try:
+                mcp_request = MCPRequest(**request)
+                method = mcp_request.method
+                params = mcp_request.params or {}
+                request_id = mcp_request.id
+            except Exception as e:
+                logger.warning(f"Invalid request format: {e}")
+                return self._error_response(None, -32600, "Invalid request format")
+            # Check rate limit
+            user_id = None
+            if self.auth_enabled and hasattr(self.auth_middleware, 'get_current_user'):
+                current_user = self.auth_middleware.get_current_user()
+                user_id = current_user.sub if current_user else None
+            
+            allowed, rate_limit_error = await self.rate_limiter.check_rate_limit(
+                request, 
+                user_id=user_id
+            )
+            
+            if not allowed:
+                logger.warning(f"Rate limit exceeded for method {method}: {rate_limit_error}")
+                return self._error_response(request_id, -32029, f"Rate limit exceeded: {rate_limit_error}")
+            
+            # Authenticate request if auth is enabled
+            user_context = None
+            if self.auth_enabled:
+                try:
+                    user_context = await self.auth_middleware.authenticate_request(request)
+                except AuthenticationError as e:
+                    logger.warning(f"Authentication failed for method {method}: {e}")
+                    return self._error_response(request_id, -32000, f"Authentication required: {str(e)}")
+            
+            # Add authentication endpoints
+            if method == "auth/login":
+                return await self._handle_login(request_id, params)
+            elif method == "auth/refresh":
+                return await self._handle_refresh_token(request_id, params)
+            elif method == "initialize":
                 return await self._handle_initialize(request_id, params)
             elif method == "tools/list":
                 return await self._handle_list_tools(request_id)
@@ -164,6 +242,42 @@ class SAFLAMCPServer:
                 }
             }
         }
+    
+    async def _handle_login(self, request_id: int, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle auth/login request"""
+        if not self.auth_enabled:
+            return self._error_response(request_id, -32000, "Authentication not enabled")
+        
+        try:
+            result = await self.auth_handler.handle_login(params)
+            return {
+                "jsonrpc": "2.0",
+                "id": request_id,
+                "result": result
+            }
+        except AuthenticationError as e:
+            return self._error_response(request_id, -32000, str(e))
+        except Exception as e:
+            logger.error(f"Login error: {e}")
+            return self._error_response(request_id, -32603, f"Internal error: {str(e)}")
+    
+    async def _handle_refresh_token(self, request_id: int, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle auth/refresh request"""
+        if not self.auth_enabled:
+            return self._error_response(request_id, -32000, "Authentication not enabled")
+        
+        try:
+            result = await self.auth_handler.handle_refresh(params)
+            return {
+                "jsonrpc": "2.0",
+                "id": request_id,
+                "result": result
+            }
+        except AuthenticationError as e:
+            return self._error_response(request_id, -32000, str(e))
+        except Exception as e:
+            logger.error(f"Token refresh error: {e}")
+            return self._error_response(request_id, -32603, f"Internal error: {str(e)}")
     
     async def _handle_list_tools(self, request_id: int) -> Dict[str, Any]:
         """Handle tools/list request with comprehensive tool categories"""
@@ -655,7 +769,7 @@ class SAFLAMCPServer:
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "metric_type": {"type": "string", "enum": ["all", "accuracy", "adaptation_rate", "knowledge_retention"], "default": "all"},
+                        "metric_type": {"type": "string", "enum": ["all", "accuracy", "adaptation_threshold", "knowledge_retention"], "default": "all"},
                         "time_range_hours": {"type": "integer", "description": "Time range for metrics in hours", "default": 24}
                     },
                     "additionalProperties": False
@@ -700,8 +814,43 @@ class SAFLAMCPServer:
     
     async def _handle_call_tool(self, request_id: int, params: Dict[str, Any]) -> Dict[str, Any]:
         """Handle tools/call request with comprehensive tool routing"""
-        tool_name = params.get("name")
-        tool_args = params.get("arguments", {})
+        try:
+            # Validate tool call request
+            tool_request = ToolCallRequest(**params)
+            tool_name = validate_tool_name(tool_request.name)
+            tool_args = tool_request.arguments
+        except Exception as e:
+            logger.warning(f"Invalid tool call request: {e}")
+            return self._error_response(request_id, -32602, f"Invalid tool call parameters: {str(e)}")
+        
+        # Try to dispatch to registered handler first
+        try:
+            handler_info = self.handler_registry.get_handler(tool_name)
+            if handler_info:
+                # Build context for handler
+                context = {
+                    'authenticated': hasattr(self, 'auth_middleware') and self.auth_middleware.get_current_user() is not None,
+                    'user': self.auth_middleware.get_current_user() if hasattr(self, 'auth_middleware') else None,
+                    'server': self
+                }
+                
+                result = await self.handler_registry.dispatch(tool_name, tool_args, context)
+                
+                return {
+                    "jsonrpc": "2.0",
+                    "id": request_id,
+                    "result": {
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": json.dumps(result, indent=2)
+                            }
+                        ]
+                    }
+                }
+        except Exception as e:
+            logger.error(f"Handler dispatch error for {tool_name}: {e}")
+            # Fall through to legacy handlers
         
         # Core System Tools
         if tool_name == "validate_installation":
@@ -783,7 +932,13 @@ class SAFLAMCPServer:
         elif tool_name == "list_goals":
             result = await self._list_goals(tool_args)
         elif tool_name == "update_goal":
-            result = await self._update_goal(tool_args)
+            result = await self._update_goal(
+                goal_id=tool_args.get("goal_id"),
+                progress=tool_args.get("progress"),
+                status=tool_args.get("status"),
+                current_value=tool_args.get("current_value"),
+                notes=tool_args.get("notes")
+            )
         elif tool_name == "delete_goal":
             result = await self._delete_goal(tool_args)
         elif tool_name == "evaluate_goal_progress":
@@ -815,9 +970,16 @@ class SAFLAMCPServer:
                 time_range_hours=tool_args.get("time_range_hours", 24)
             )
         elif tool_name == "update_learning_parameters":
-            result = await self._update_learning_parameters(tool_args)
+            result = await self._update_learning_parameters(
+                learning_rate=tool_args.get("learning_rate"),
+                adaptation_threshold=tool_args.get("adaptation_threshold"),
+                memory_retention=tool_args.get("memory_retention"),
+                exploration_factor=tool_args.get("exploration_factor")
+            )
         elif tool_name == "analyze_adaptation_patterns":
-            result = await self._analyze_adaptation_patterns(tool_args)
+            result = await self._analyze_adaptation_patterns(
+                time_window_hours=tool_args.get("time_window_hours", 24)
+            )
         
         else:
             return self._error_response(request_id, -32602, f"Unknown tool: {tool_name}")
@@ -1395,9 +1557,17 @@ class SAFLAMCPServer:
     async def _backup_safla_data(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Create backup of SAFLA data"""
         try:
+            # Validate backup request
+            backup_request = BackupRequest(
+                backup_path=args.get("destination", f"/tmp/safla_backup_{int(time.time())}"),
+                include_models=args.get("include_models", True),
+                include_data=args.get("include_data", True),
+                compress=args.get("compress", True)
+            )
+            
             backup_type = args.get("backup_type", "full")
-            destination = args.get("destination", f"/tmp/safla_backup_{int(time.time())}")
-            compress = args.get("compress", True)
+            destination = validate_path(backup_request.backup_path, base_dir="/tmp")
+            compress = backup_request.compress
             
             # Simulate backup process
             backup_id = f"backup_{int(time.time())}"
@@ -2090,7 +2260,8 @@ class SAFLAMCPServer:
             }
 
     async def _update_goal(self, goal_id: str, progress: float = None,
-                          status: str = None, current_value: float = None) -> Dict[str, Any]:
+                          status: str = None, current_value: float = None,
+                          notes: str = None) -> Dict[str, Any]:
         """Update goal progress and status"""
         try:
             if goal_id not in self.goals:
@@ -2129,6 +2300,14 @@ class SAFLAMCPServer:
                 goal["current_value"] = current_value
                 if goal["target_value"]:
                     goal["progress"] = min(1.0, current_value / goal["target_value"])
+            
+            if notes is not None:
+                if "notes" not in goal:
+                    goal["notes"] = []
+                goal["notes"].append({
+                    "timestamp": time.time(),
+                    "note": notes
+                })
             
             goal["metrics"]["attempts"] += 1
             goal["last_updated"] = time.time()
@@ -2436,7 +2615,7 @@ class SAFLAMCPServer:
             new_accuracy = learning_data.get("performance_metrics", {}).get("accuracy", old_accuracy)
             
             # Calculate adaptation
-            adaptation_rate = self.learning_metrics["adaptation_rate"]
+            adaptation_threshold = self.learning_metrics["adaptation_threshold"]
             learning_rate = self.learning_metrics["learning_rate"]
             
             # Update metrics with learning
@@ -2447,9 +2626,9 @@ class SAFLAMCPServer:
             # Update adaptation rate based on feedback
             feedback = learning_data.get("feedback", "neutral")
             if feedback == "positive":
-                self.learning_metrics["adaptation_rate"] = min(1.0, adaptation_rate + 0.01)
+                self.learning_metrics["adaptation_threshold"] = min(1.0, adaptation_threshold + 0.01)
             elif feedback == "negative":
-                self.learning_metrics["adaptation_rate"] = max(0.0, adaptation_rate - 0.01)
+                self.learning_metrics["adaptation_threshold"] = max(0.0, adaptation_threshold - 0.01)
             
             # Record adaptation pattern
             adaptation_pattern = {
@@ -2476,7 +2655,7 @@ class SAFLAMCPServer:
                     "previous_accuracy": old_accuracy,
                     "new_accuracy": self.learning_metrics["accuracy"],
                     "improvement": self.learning_metrics["accuracy"] - old_accuracy,
-                    "adaptation_rate": self.learning_metrics["adaptation_rate"],
+                    "adaptation_threshold": self.learning_metrics["adaptation_threshold"],
                     "feedback": feedback,
                     "context": learning_data.get("context")
                 },
@@ -2517,7 +2696,7 @@ class SAFLAMCPServer:
                 },
                 "learning_trends": {
                     "accuracy_trend": "stable",  # Could be calculated from patterns
-                    "adaptation_effectiveness": self.learning_metrics["adaptation_rate"],
+                    "adaptation_effectiveness": self.learning_metrics["adaptation_threshold"],
                     "knowledge_retention": self.learning_metrics["knowledge_retention"]
                 },
                 "total_adaptation_patterns": len(self.adaptation_patterns)
@@ -2530,9 +2709,9 @@ class SAFLAMCPServer:
                     "recent_success_rate": recent_success_rate,
                     "accuracy_trend": all_metrics["learning_trends"]["accuracy_trend"]
                 }
-            elif metric_type == "adaptation_rate":
+            elif metric_type == "adaptation_threshold":
                 metrics = {
-                    "adaptation_rate": self.learning_metrics["adaptation_rate"],
+                    "adaptation_threshold": self.learning_metrics["adaptation_threshold"],
                     "adaptation_effectiveness": all_metrics["learning_trends"]["adaptation_effectiveness"],
                     "patterns_count": len(recent_patterns)
                 }
@@ -2560,8 +2739,9 @@ class SAFLAMCPServer:
             }
 
     async def _update_learning_parameters(self, learning_rate: float = None,
-                                        exploration_factor: float = None,
-                                        adaptation_rate: float = None) -> Dict[str, Any]:
+                                        adaptation_threshold: float = None,
+                                        memory_retention: float = None,
+                                        exploration_factor: float = None) -> Dict[str, Any]:
         """Update learning algorithm parameters"""
         try:
             old_params = self.learning_metrics.copy()
@@ -2575,6 +2755,24 @@ class SAFLAMCPServer:
                         "error": "Learning rate must be between 0.0 and 1.0"
                     }
             
+            if adaptation_threshold is not None:
+                if 0.0 <= adaptation_threshold <= 1.0:
+                    self.learning_metrics["adaptation_threshold"] = adaptation_threshold
+                else:
+                    return {
+                        "success": False,
+                        "error": "Adaptation threshold must be between 0.0 and 1.0"
+                    }
+            
+            if memory_retention is not None:
+                if 0.0 <= memory_retention <= 1.0:
+                    self.learning_metrics["memory_retention"] = memory_retention
+                else:
+                    return {
+                        "success": False,
+                        "error": "Memory retention must be between 0.0 and 1.0"
+                    }
+            
             if exploration_factor is not None:
                 if 0.0 <= exploration_factor <= 1.0:
                     self.learning_metrics["exploration_factor"] = exploration_factor
@@ -2584,26 +2782,19 @@ class SAFLAMCPServer:
                         "error": "Exploration factor must be between 0.0 and 1.0"
                     }
             
-            if adaptation_rate is not None:
-                if 0.0 <= adaptation_rate <= 1.0:
-                    self.learning_metrics["adaptation_rate"] = adaptation_rate
-                else:
-                    return {
-                        "success": False,
-                        "error": "Adaptation rate must be between 0.0 and 1.0"
-                    }
-            
             return {
                 "success": True,
                 "old_parameters": {
-                    "learning_rate": old_params["learning_rate"],
-                    "exploration_factor": old_params["exploration_factor"],
-                    "adaptation_rate": old_params["adaptation_rate"]
+                    "learning_rate": old_params.get("learning_rate"),
+                    "adaptation_threshold": old_params.get("adaptation_threshold"),
+                    "memory_retention": old_params.get("memory_retention"),
+                    "exploration_factor": old_params.get("exploration_factor")
                 },
                 "new_parameters": {
-                    "learning_rate": self.learning_metrics["learning_rate"],
-                    "exploration_factor": self.learning_metrics["exploration_factor"],
-                    "adaptation_rate": self.learning_metrics["adaptation_rate"]
+                    "learning_rate": self.learning_metrics.get("learning_rate"),
+                    "adaptation_threshold": self.learning_metrics.get("adaptation_threshold"),
+                    "memory_retention": self.learning_metrics.get("memory_retention"),
+                    "exploration_factor": self.learning_metrics.get("exploration_factor")
                 },
                 "timestamp": time.time()
             }
@@ -2964,7 +3155,7 @@ class SAFLAMCPServer:
             },
             "learning_status": {
                 "accuracy": self.learning_metrics["accuracy"],
-                "adaptation_rate": self.learning_metrics["adaptation_rate"],
+                "adaptation_threshold": self.learning_metrics["adaptation_threshold"],
                 "time_since_last_cycle_minutes": (current_time - self.learning_metrics["last_learning_cycle"]) / 60
             },
             "timestamp": current_time
@@ -3104,7 +3295,7 @@ class SAFLAMCPServer:
             },
             "learning_health": {
                 "accuracy_status": "good" if self.learning_metrics["accuracy"] > 0.8 else "needs_improvement",
-                "adaptation_status": "active" if self.learning_metrics["adaptation_rate"] > 0.5 else "low",
+                "adaptation_status": "active" if self.learning_metrics["adaptation_threshold"] > 0.5 else "low",
                 "retention_status": "excellent" if self.learning_metrics["knowledge_retention"] > 0.85 else "good"
             },
             "total_adaptation_patterns": len(self.adaptation_patterns),
@@ -3190,14 +3381,66 @@ class SAFLAMCPServer:
             "timestamp": current_time
         }
     
+    # Authentication handler methods
+    async def _handle_login(self, request_id: int, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle login request"""
+        try:
+            if not self.auth_handler:
+                return self._error_response(request_id, -32000, "Authentication not configured")
+            
+            result = await self.auth_handler.handle_login(params)
+            return {
+                "jsonrpc": "2.0",
+                "id": request_id,
+                "result": result
+            }
+        except AuthenticationError as e:
+            return self._error_response(request_id, -32000, str(e))
+        except Exception as e:
+            logger.error(f"Login error: {e}")
+            return self._error_response(request_id, -32603, f"Login failed: {str(e)}")
+    
+    async def _handle_refresh_token(self, request_id: int, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle token refresh request"""
+        try:
+            if not self.auth_handler:
+                return self._error_response(request_id, -32000, "Authentication not configured")
+            
+            result = await self.auth_handler.handle_refresh(params)
+            return {
+                "jsonrpc": "2.0",
+                "id": request_id,
+                "result": result
+            }
+        except AuthenticationError as e:
+            return self._error_response(request_id, -32000, str(e))
+        except Exception as e:
+            logger.error(f"Token refresh error: {e}")
+            return self._error_response(request_id, -32603, f"Token refresh failed: {str(e)}")
+    
+    def _register_handlers(self) -> None:
+        """Register modular handlers with the handler registry"""
+        try:
+            # Import handler modules to trigger registration
+            import safla.mcp.handlers.core_tools
+            import safla.mcp.handlers.deployment_tools
+            import safla.mcp.handlers.optimization_tools
+            
+            logger.info(f"Registered {len(self.handler_registry.list_handlers())} modular handlers")
+        except Exception as e:
+            logger.warning(f"Failed to register some handlers: {e}")
+    
     def _error_response(self, request_id: int, code: int, message: str) -> Dict[str, Any]:
-        """Create an error response"""
+        """Create an error response with sanitized message"""
+        # Sanitize error message to prevent information leakage
+        sanitized_message = sanitize_error_message(message)
+        
         return {
             "jsonrpc": "2.0",
             "id": request_id,
             "error": {
                 "code": code,
-                "message": message
+                "message": sanitized_message
             }
         }
 

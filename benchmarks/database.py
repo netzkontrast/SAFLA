@@ -337,12 +337,10 @@ class BenchmarkDatabase:
                     'success_rate': 0.0
                 }
     
-    def cleanup_old_results(self, days: int = 90) -> int:
+    def cleanup_old_results(self, cutoff_date: datetime) -> int:
         """Clean up old benchmark results."""
         with self._get_connection() as conn:
             cursor = conn.cursor()
-            
-            cutoff_date = datetime.now() - timedelta(days=days)
             
             # Delete old results
             cursor.execute("""
@@ -374,6 +372,78 @@ class BenchmarkDatabase:
             logger.info(f"Cleaned up {total_deleted} old records (older than {days} days)")
             
             return total_deleted
+    
+    def get_recent_results(self, benchmark_name: str, days: int = 7, limit: int = 10) -> List[Dict[str, Any]]:
+        """Get recent results for a specific benchmark within the specified days."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            
+            since_date = datetime.now() - timedelta(days=days)
+            
+            cursor.execute("""
+                SELECT * FROM benchmark_results 
+                WHERE benchmark_name = ? AND timestamp >= ?
+                ORDER BY timestamp DESC 
+                LIMIT ?
+            """, (benchmark_name, since_date.isoformat(), limit))
+            
+            rows = cursor.fetchall()
+            results = []
+            
+            for row in rows:
+                result = dict(row)
+                result['custom_metrics'] = json.loads(result['custom_metrics'] or '{}')
+                result['metadata'] = json.loads(result['metadata'] or '{}')
+                results.append(result)
+            
+            return results
+    
+    def get_all_recent_results(self, days: int = 7, limit: int = 50) -> List[Dict[str, Any]]:
+        """Get all recent benchmark results within the specified days."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            
+            since_date = datetime.now() - timedelta(days=days)
+            
+            cursor.execute("""
+                SELECT * FROM benchmark_results 
+                WHERE timestamp >= ?
+                ORDER BY timestamp DESC 
+                LIMIT ?
+            """, (since_date.isoformat(), limit))
+            
+            rows = cursor.fetchall()
+            results = []
+            
+            for row in rows:
+                result = dict(row)
+                result['custom_metrics'] = json.loads(result['custom_metrics'] or '{}')
+                result['metadata'] = json.loads(result['metadata'] or '{}')
+                results.append(result)
+            
+            return results
+    
+    def get_results_in_range(self, benchmark_name: str, start_date: datetime, end_date: datetime) -> List[Dict[str, Any]]:
+        """Get benchmark results within a specific date range."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                SELECT * FROM benchmark_results 
+                WHERE benchmark_name = ? AND timestamp >= ? AND timestamp <= ?
+                ORDER BY timestamp ASC
+            """, (benchmark_name, start_date.isoformat(), end_date.isoformat()))
+            
+            rows = cursor.fetchall()
+            results = []
+            
+            for row in rows:
+                result = dict(row)
+                result['custom_metrics'] = json.loads(result['custom_metrics'] or '{}')
+                result['metadata'] = json.loads(result['metadata'] or '{}')
+                results.append(result)
+            
+            return results
     
     def export_results(self, output_file: str, benchmark_name: Optional[str] = None,
                       days: Optional[int] = None) -> None:

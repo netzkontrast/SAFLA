@@ -32,6 +32,9 @@ from collections import defaultdict, OrderedDict
 import heapq
 import logging
 from abc import ABC, abstractmethod
+import json
+import pickle
+from pathlib import Path
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -1368,3 +1371,140 @@ class HybridMemoryArchitecture:
         
         logger.info(f"Cleaned up {cleanup_stats['items_removed']} items from memory")
         return cleanup_stats
+    
+    async def save_to_disk(self, file_path: Union[str, Path], encrypt: bool = True) -> None:
+        """
+        Save memory state to disk with optional encryption.
+        
+        Args:
+            file_path: Path to save memory state
+            encrypt: Whether to encrypt the saved data
+        """
+        from safla.security import DataEncryptor, EncryptionError
+        
+        file_path = Path(file_path)
+        
+        # Prepare memory state
+        memory_state = {
+            'vector_memory': {
+                'memories': list(self.vector_memory.memories.values()),
+                'metadata': self.vector_memory.index_metadata
+            },
+            'episodic_memory': {
+                'memories': list(self.episodic_memory.memories.values()),
+                'sequences': list(self.episodic_memory.sequences.values())
+            },
+            'semantic_memory': {
+                'nodes': list(self.semantic_memory.nodes.values()),
+                'edges': self.semantic_memory.edges
+            },
+            'working_memory': {
+                'contexts': list(self.working_memory.contexts.values()),
+                'attention_scores': dict(self.working_memory.attention_scores)
+            },
+            'metadata': {
+                'save_time': datetime.now().isoformat(),
+                'version': '1.0',
+                'encrypted': encrypt
+            }
+        }
+        
+        try:
+            # Serialize to JSON
+            json_data = json.dumps(memory_state, default=str)
+            
+            if encrypt:
+                # Encrypt the data
+                encryptor = DataEncryptor()
+                encrypted_data = encryptor.encrypt_string(json_data)
+                
+                # Save encrypted data
+                with open(file_path, 'w') as f:
+                    f.write(encrypted_data)
+                
+                logger.info(f"Memory state saved and encrypted to {file_path}")
+            else:
+                # Save unencrypted
+                with open(file_path, 'w') as f:
+                    f.write(json_data)
+                
+                logger.info(f"Memory state saved to {file_path}")
+                
+        except Exception as e:
+            logger.error(f"Failed to save memory state: {e}")
+            raise
+    
+    async def load_from_disk(self, file_path: Union[str, Path]) -> None:
+        """
+        Load memory state from disk with automatic decryption if needed.
+        
+        Args:
+            file_path: Path to load memory state from
+        """
+        from safla.security import DataEncryptor, EncryptionError
+        
+        file_path = Path(file_path)
+        
+        if not file_path.exists():
+            raise FileNotFoundError(f"Memory state file not found: {file_path}")
+        
+        try:
+            # Read file content
+            with open(file_path, 'r') as f:
+                content = f.read()
+            
+            # Try to parse as JSON first (unencrypted)
+            try:
+                memory_state = json.loads(content)
+            except json.JSONDecodeError:
+                # Might be encrypted, try to decrypt
+                try:
+                    encryptor = DataEncryptor()
+                    decrypted = encryptor.decrypt_string(content)
+                    memory_state = json.loads(decrypted)
+                except (EncryptionError, json.JSONDecodeError) as e:
+                    logger.error(f"Failed to decrypt or parse memory state: {e}")
+                    raise ValueError("Invalid memory state file format")
+            
+            # Clear existing memories
+            await self.clear_all()
+            
+            # Restore vector memories
+            for memory_data in memory_state.get('vector_memory', {}).get('memories', []):
+                memory = VectorMemory(**memory_data)
+                self.vector_memory.memories[memory.memory_id] = memory
+                # Note: FAISS index would need to be rebuilt
+            
+            # Restore episodic memories
+            for episode_data in memory_state.get('episodic_memory', {}).get('memories', []):
+                episode = EpisodeMemory(**episode_data)
+                self.episodic_memory.memories[episode.episode_id] = episode
+            
+            for sequence_data in memory_state.get('episodic_memory', {}).get('sequences', []):
+                sequence = Sequence(**sequence_data)
+                self.episodic_memory.sequences[sequence.sequence_id] = sequence
+            
+            # Restore semantic memories
+            for node_data in memory_state.get('semantic_memory', {}).get('nodes', []):
+                node = SemanticNode(**node_data)
+                self.semantic_memory.nodes[node.node_id] = node
+            
+            self.semantic_memory.edges = memory_state.get('semantic_memory', {}).get('edges', defaultdict(list))
+            
+            # Restore working memory
+            for context_data in memory_state.get('working_memory', {}).get('contexts', []):
+                context = WorkingContext(**context_data)
+                self.working_memory.contexts[context.context_id] = context
+            
+            self.working_memory.attention_scores = memory_state.get('working_memory', {}).get('attention_scores', {})
+            
+            # Rebuild indices
+            self.vector_memory._rebuild_index()
+            self.episodic_memory._rebuild_temporal_index()
+            self.working_memory._rebuild_attention_heap()
+            
+            logger.info(f"Memory state loaded from {file_path}")
+            
+        except Exception as e:
+            logger.error(f"Failed to load memory state: {e}")
+            raise

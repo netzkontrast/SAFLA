@@ -12,18 +12,18 @@ This package provides:
 - Delta Evaluation System for quantifying improvements
 """
 
-__version__ = "0.1.0"
+__version__ = "0.1.3"
 __author__ = "SAFLA Development Team"
-__email__ = "dev@safla.ai"
+__email__ = "ruv@ruv.net"
 __license__ = "MIT"
 __url__ = "https://github.com/ruvnet/SAFLA"
 
 # Core component imports
 from safla.core.hybrid_memory import HybridMemoryArchitecture
 from safla.core.meta_cognitive_engine import MetaCognitiveEngine
-from safla.core.mcp_orchestration import MCPOrchestrator
-from safla.core.safety_validation import SafetyValidationFramework
-from safla.core.delta_evaluation import DeltaEvaluator
+from safla.core.mcp_orchestration import OptimizedMCPOrchestrator as MCPOrchestrator
+from safla.core.safety_validation import OptimizedSafetyValidator as SafetyValidationFramework
+from safla.core.delta_evaluation import OptimizedDeltaEvaluator as DeltaEvaluator
 
 # Utility imports
 from safla.utils.config import SAFLAConfig

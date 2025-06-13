@@ -23,21 +23,15 @@ from enum import Enum
 
 # Import the classes we'll implement
 from safla.core.adaptive_safety_boundaries import (
-    AdaptiveSafetyManager,
+    AdaptiveSafetyBoundaries,
     SafetyConstraint,
-    RiskAssessmentEngine,
-    SafetyPolicyLearner,
-    ConstraintViolationDetector,
-    SafetyMetricsCollector,
-    SafetyBoundaryOptimizer,
-    SafetyConfig,
-    RiskLevel,
-    SafetyViolation,
-    SafetyAction,
-    SafetyContext,
+    SafetyLevel,
     ConstraintType,
-    SafetyRule,
-    AdaptationStrategy
+    SafetyMetrics,
+    AdaptationStrategy,
+    RiskAssessmentEngine,
+    ConstraintOptimizer,
+    SafetyMonitoringDashboard
 )
 
 
@@ -117,8 +111,8 @@ class TestAdaptiveSafetyManager:
     
     @pytest.fixture
     def safety_manager(self, safety_config):
-        """Create AdaptiveSafetyManager instance for testing."""
-        return AdaptiveSafetyManager(config=safety_config)
+        """Create AdaptiveSafetyBoundaries instance for testing."""
+        return AdaptiveSafetyBoundaries(config=safety_config)
     
     @pytest.fixture
     def mock_constraints(self):
@@ -155,7 +149,7 @@ class TestAdaptiveSafetyManager:
         ]
     
     def test_safety_manager_initialization(self, safety_manager, safety_config):
-        """Test AdaptiveSafetyManager initialization."""
+        """Test AdaptiveSafetyBoundaries initialization."""
         assert safety_manager.config == safety_config
         assert safety_manager.risk_assessment_engine is not None
         assert safety_manager.policy_learner is not None

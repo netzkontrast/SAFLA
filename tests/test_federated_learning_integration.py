@@ -26,19 +26,14 @@ from enum import Enum
 from safla.core.federated_learning_integration import (
     FederatedLearningCoordinator,
     FederatedClient,
-    ModelAggregator,
-    PrivacyEngine,
-    SecureAggregation,
-    DifferentialPrivacy,
-    FederatedOptimizer,
-    ModelVersionManager,
-    FederatedConfig,
-    ClientMetrics,
-    AggregationResult,
-    PrivacyBudget,
-    SecureComputationProtocol,
-    KnowledgeDistillation,
-    FederatedEvaluation
+    AggregationStrategy,
+    ClientStatus,
+    PrivacyMechanism,
+    ModelUpdate,
+    FederatedRound,
+    PrivacyConfig,
+    ModelCompressor,
+    SecureAggregator
 )
 
 

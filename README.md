@@ -13,7 +13,7 @@ SAFLA is a production-ready autonomous AI system that combines advanced memory m
 - **🔗 MCP Integration**: Full Model Context Protocol support with 24 tools across 6 domains
 - **🛡️ Safety & Validation**: Comprehensive safety constraints, risk assessment, and rollback mechanisms
 - **📊 Delta Evaluation**: Formal quantification of system improvements across multiple dimensions
-- **🔧 SDK & CLI**: Rich command-line interface and Python SDK for easy integration
+- **🔧 CLI Management System**: Complete command-line interface for system administration and operations
 - **📈 Benchmarking**: Comprehensive performance monitoring and optimization tools
 
 ### 🎯 Novel Applications
@@ -32,7 +32,7 @@ SAFLA enables breakthrough applications in:
 - **Production Ready**: Comprehensive testing, benchmarking, and safety validation
 - **Scalable Architecture**: Distributed design supporting enterprise-scale deployments
 - **Safety First**: Built-in constraints, monitoring, and emergency stop mechanisms
-- **Easy Integration**: Rich SDK, CLI tools, and MCP protocol support
+- **Easy Integration**: Comprehensive CLI tools, Python SDK, and MCP protocol support
 - **Performance Optimized**: Advanced memory management and optimization algorithms
 - **Extensible Design**: Modular architecture supporting custom components and integrations
 
@@ -54,26 +54,62 @@ SAFLA enables breakthrough applications in:
 - **Performance Monitor**: Real-time performance tracking, alerting, and trend analysis
 - **Adaptation Engine**: Continuous learning and controlled self-modification
 
-#### 3. MCP Integration & SDK
+#### 3. CLI Management System
+- **Complete CLI Interface**: Comprehensive command-line tools for all system operations
+- **System Management**: Start, stop, restart, status monitoring, and health diagnostics
+- **Configuration Management**: View, edit, backup, restore configuration with multiple formats
+- **Real-time Monitoring**: Live dashboards, metrics, logs, and performance monitoring
+- **Optimization Tools**: System analysis, automated optimizations, memory and cache tuning
+- **Benchmarking Suite**: Performance testing with quick, standard, and comprehensive modes
+- **Agent Management**: Deploy, scale, monitor, and manage agent instances
+- **Interactive Features**: TUI dashboard, setup wizard, and comprehensive help system
+
+#### 4. MCP Integration & SDK
 - **24 Comprehensive Tools**: Deployment, optimization, admin, testing, benchmarking, and agent interaction
 - **15 Real-time Resources**: Configuration, status, metrics, logs, and system information
 - **Full Protocol Support**: JSON-RPC 2.0 compliant MCP server with stdio communication
-- **Rich CLI Interface**: Complete command-line tools for system management and operations
+- **JWT Authentication**: Secure token-based authentication with role-based access control
 - **Python SDK**: Easy-to-use Python API for programmatic access and integration
 
-#### 4. Safety & Validation Framework
+#### 5. Safety & Validation Framework
 - **Safety Constraints**: Hard and soft limits with configurable violation actions
 - **Validation Pipeline**: Multi-stage validation with timeout and error handling
 - **Risk Assessment**: Quantitative risk scoring with weighted factor analysis
 - **Rollback Mechanisms**: Safe reversion to previous system states via checkpoints
 - **Safety Monitoring**: Real-time monitoring with configurable alert thresholds
 
-#### 5. Delta Evaluation System
+#### 6. Delta Evaluation System
 - **Performance Delta**: Reward improvements per token with historical tracking
 - **Efficiency Delta**: Throughput improvements per resource with multi-resource support
 - **Stability Delta**: Divergence-based stability measurement with trend analysis
 - **Capability Delta**: New capabilities acquisition tracking relative to total capability space
 - **Adaptive Weighting**: Context-aware weight adjustment for different operational priorities
+
+## 📁 Project Structure
+
+```
+SAFLA/
+├── safla/                    # Main package
+│   ├── core/                 # Core system components
+│   │   ├── hybrid_memory.py     # Hybrid memory architecture
+│   │   ├── meta_cognitive_engine.py  # Meta-cognitive engine
+│   │   ├── mcp_orchestration.py     # MCP orchestration
+│   │   ├── safety_validation.py     # Safety validation framework
+│   │   └── delta_evaluation.py      # Delta evaluation system
+│   ├── mcp/                  # MCP server and handlers
+│   ├── utils/                # Utilities and helpers
+│   ├── cli_manager.py        # Main CLI structure
+│   ├── cli_implementations.py # CLI command implementations
+│   ├── cli_interactive.py    # Interactive CLI components
+│   └── cli_main.py          # CLI entry point
+├── tests/                    # Test suite
+│   ├── test_cli_comprehensive.py # CLI test suite
+│   └── integration/          # Integration tests
+├── docs/                     # Documentation
+├── examples/                 # Usage examples
+├── CLI_USAGE_GUIDE.md       # Complete CLI documentation
+└── benchmarks/              # Performance benchmarks
+```
 
 ## 🚀 Quick Start
 
@@ -82,7 +118,7 @@ SAFLA enables breakthrough applications in:
 #### Option 1: Package Installation (Recommended)
 
 ```bash
-# Install from PyPI (when published)
+# Install from PyPI
 pip install safla
 
 # Or install from source
@@ -133,6 +169,56 @@ cp .env.example .env
 - Memory: Minimum 512MB RAM
 - Disk Space: At least 100MB free space
 
+## 📁 Project Structure
+
+SAFLA follows a well-organized project structure to maintain clarity and ease of development:
+
+```
+SAFLA/
+├── safla/                    # Core SAFLA package
+│   ├── core/                 # Core system components
+│   ├── mcp/                  # MCP server implementation
+│   ├── utils/                # Utility functions
+│   └── cli/                  # Command-line interface
+├── development/              # Development utilities and tools
+│   ├── debug_config.json     # Debug configuration
+│   ├── demo_script.py        # Demo and example scripts
+│   ├── fix_*.py             # Bug fixes and patches
+│   └── implementation_*.md   # Implementation summaries
+├── testing/                  # Test files and results
+│   ├── test_*.py            # Python test files
+│   ├── test_*.js            # JavaScript test files
+│   ├── benchmark_*.json     # Benchmark results
+│   └── validation_*.md      # Validation reports
+├── config/                   # Configuration files
+│   ├── *.json               # Environment configurations
+│   └── sample.env           # Sample environment file
+├── integration/              # MCP integration components
+│   ├── mcp_integration.*    # MCP integration files
+│   └── *.md                 # Integration documentation
+├── benchmarks/               # Performance benchmarking
+├── data/                     # Data files and datasets
+├── docs/                     # Documentation
+├── examples/                 # Usage examples
+├── memory_bank/              # Memory system data
+├── plans/                    # Project planning documents
+├── research/                 # Research and analysis
+├── scripts/                  # Utility scripts
+├── tests/                    # Main test directory
+└── requirements.txt          # Python dependencies
+```
+
+### Key Directories
+
+- **`safla/`**: The main Python package containing all core functionality
+- **`development/`**: Development utilities, debug configs, and implementation tools
+- **`testing/`**: Comprehensive test files, benchmark results, and validation reports
+- **`config/`**: Configuration files for different environments and setups
+- **`integration/`**: MCP integration components and related documentation
+- **`benchmarks/`**: Performance benchmarking tools and results
+- **`docs/`**: Comprehensive documentation and guides
+- **`examples/`**: Usage examples and sample implementations
+
 ### Basic Usage
 
 #### Python SDK
@@ -169,25 +255,166 @@ similar_memories = await memory.search_similar_memories(
 
 #### CLI Interface
 
+SAFLA includes a comprehensive command-line interface for complete system management:
+
 ```bash
-# Validate system and installation
-safla validate
+# System Management
+python safla/cli_main.py system status                    # Show system health
+python safla/cli_main.py system start                     # Start all components
+python safla/cli_main.py system stop                      # Stop system
+python safla/cli_main.py system validate                  # Validate installation
 
-# Show system information
-safla info
+# Configuration Management
+python safla/cli_main.py config show                      # Display configuration
+python safla/cli_main.py config set SAFLA_DEBUG true     # Set configuration
+python safla/cli_main.py config backup                    # Backup configuration
+python safla/cli_main.py config edit                      # Edit in preferred editor
 
-# Start SAFLA system
-safla start
+# Monitoring & Metrics
+python safla/cli_main.py monitor live                     # Live monitoring dashboard
+python safla/cli_main.py monitor logs --follow            # Follow system logs
+python safla/cli_main.py monitor metrics --detailed       # Show detailed metrics
+python safla/cli_main.py monitor performance              # Performance monitoring
+
+# Optimization & Benchmarking
+python safla/cli_main.py optimize analyze --auto          # Auto-apply optimizations
+python safla/cli_main.py optimize memory                  # Optimize memory usage
+python safla/cli_main.py benchmark run --suite comprehensive  # Run benchmarks
+python safla/cli_main.py benchmark stress                 # Stress testing
+
+# Agent Management
+python safla/cli_main.py agents list                      # List deployed agents
+python safla/cli_main.py agents deploy my-agent --replicas 3  # Deploy agent
+python safla/cli_main.py agents scale my-agent --replicas 5   # Scale agent
+python safla/cli_main.py agents logs my-agent --follow    # View agent logs
+
+# Interactive Features
+python safla/cli_main.py dashboard                        # Launch TUI dashboard
+python safla/cli_main.py setup                           # Interactive setup wizard
+python safla/cli_main.py doctor                          # System health diagnostics
+python safla/cli_main.py search memory                   # Search commands/docs
+
+# Utility Commands
+python safla/cli_main.py version --format json           # Version information
+python safla/cli_main.py help-menu                       # Comprehensive help
+```
+
+### CLI Command Groups
+
+- **`system`** - System management and operations (start, stop, status, validate)
+- **`config`** - Configuration management (show, set, edit, backup, restore)
+- **`monitor`** - Real-time monitoring (live dashboard, logs, metrics, performance)
+- **`optimize`** - System optimization (analyze, apply, memory, cache)
+- **`benchmark`** - Performance testing (run suites, component tests, stress tests)
+- **`agents`** - Agent management (list, deploy, scale, remove, logs)
+- **`dashboard`** - Interactive TUI dashboard with real-time updates
+- **`setup`** - Interactive system setup wizard
+- **`doctor`** - Comprehensive system health check and diagnostics
+- **`version`** - System and component version information
+- **`search`** - Search commands, settings, and documentation
+
+## 🔧 CLI Management System
+
+SAFLA includes a comprehensive command-line interface that provides complete system administration and operational control. The CLI supports multiple output formats (table, JSON, YAML), interactive features, and automation-friendly commands.
+
+### Quick CLI Start
+
+```bash
+# Get help and available commands
+python safla/cli_main.py --help
 
 # Check system status
-safla status
+python safla/cli_main.py system status
 
-# Run benchmarks
-safla benchmark run
+# Launch interactive dashboard
+python safla/cli_main.py dashboard
 
-# Initialize configuration
-safla init-config --template production
+# Run setup wizard for first-time configuration
+python safla/cli_main.py setup
 ```
+
+### CLI Features & Capabilities
+
+#### 🖥️ **System Management**
+Complete lifecycle management of SAFLA components:
+- **Status monitoring** with health checks and component details
+- **Service control** (start, stop, restart) for individual components or full system
+- **Installation validation** with comprehensive dependency checking
+- **System diagnostics** with the built-in doctor command
+
+#### ⚙️ **Configuration Management**
+Flexible configuration with multiple formats and backup/restore:
+- **View/edit configuration** in YAML, JSON, or environment variable format
+- **Hot configuration updates** with immediate effect
+- **Configuration backup/restore** with timestamped snapshots
+- **Environment-specific configs** (development, production, testing)
+
+#### 📊 **Real-time Monitoring**
+Live system monitoring with rich interfaces:
+- **Interactive live dashboard** with real-time updates and component status
+- **Log streaming** with filtering and component-specific views
+- **Performance metrics** with detailed system and component statistics
+- **Performance monitoring** with configurable duration and alerting
+
+#### 🚀 **Optimization & Performance**
+Automated and manual system optimization:
+- **Performance analysis** with auto-discovery of optimization opportunities
+- **Targeted optimizations** (memory, cache, CPU) with impact assessment
+- **Benchmark suites** (quick, standard, comprehensive) with detailed reporting
+- **Stress testing** with configurable load levels and duration
+
+#### 🤖 **Agent Management**
+Complete agent lifecycle management:
+- **Agent deployment** with custom configurations and resource requirements
+- **Scaling operations** with horizontal scaling and resource adjustment
+- **Health monitoring** with status tracking and log access
+- **Multi-agent orchestration** with centralized management
+
+#### 🎛️ **Interactive Features**
+Rich interactive experiences for complex operations:
+- **TUI Dashboard** - Full-featured terminal UI with live updates (requires Textual)
+- **Setup Wizard** - Guided configuration for first-time setup
+- **Health Diagnostics** - Comprehensive system analysis with detailed reporting
+- **Command Search** - Built-in help system with command and setting search
+
+### CLI Output Formats
+
+The CLI supports multiple output formats for automation and integration:
+
+```bash
+# Table format (default, human-readable)
+python safla/cli_main.py system status
+
+# JSON format (for automation/parsing)
+python safla/cli_main.py system status --format json
+
+# YAML format (for configuration files)
+python safla/cli_main.py config show --format yaml
+```
+
+### Automation & Scripting
+
+The CLI is designed for automation with:
+- **Exit codes** for success/failure detection
+- **JSON output** for parsing and integration
+- **Non-interactive modes** with `--quiet` flag
+- **Configuration via environment variables**
+- **Batch operations** for multiple commands
+
+Example automation script:
+```bash
+#!/bin/bash
+# Health monitoring script
+STATUS=$(python safla/cli_main.py system status --format json | jq -r '.health')
+if [ "$STATUS" != "healthy" ]; then
+    echo "System unhealthy, restarting..."
+    python safla/cli_main.py system restart
+fi
+```
+
+### Complete CLI Reference
+
+For detailed usage of all commands, options, and examples, see the [CLI Usage Guide](CLI_USAGE_GUIDE.md).
 
 ## 🔗 MCP Integration
 
@@ -294,6 +521,61 @@ Add SAFLA to your MCP configuration (`.roo/mcp.json`):
   }
 }
 ```
+
+### JWT Authentication
+
+SAFLA MCP Server supports JWT authentication for secure access control:
+
+#### Configuration
+
+Set the following environment variables:
+
+```bash
+# Required for JWT authentication
+export JWT_SECRET_KEY="your-secret-key-here"
+
+# Optional (defaults shown)
+export JWT_EXPIRATION_TIME=3600  # Access token expiration in seconds
+```
+
+#### Authentication Flow
+
+1. **Login to get tokens:**
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "auth/login",
+  "params": {
+    "username": "developer",
+    "password": "dev123"
+  }
+}
+```
+
+2. **Use token in requests:**
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "method": "tools/list",
+  "params": {
+    "headers": {
+      "Authorization": "Bearer <access_token>"
+    }
+  }
+}
+```
+
+#### Demo Users
+
+| Username | Password | Role | Permissions |
+|----------|----------|------|-------------|
+| admin | admin123 | admin | Full access |
+| developer | dev123 | developer | Read/write access |
+| reader | read123 | reader | Read-only access |
+
+See [JWT Authentication Documentation](docs/JWT_AUTHENTICATION.md) for complete details.
 
 ### Using MCP Tools
 
@@ -520,12 +802,68 @@ python -m pytest tests/test_hybrid_memory.py
 python -m pytest tests/test_meta_cognitive.py
 python -m pytest tests/test_safety_validation.py
 
+# Test CLI functionality
+python -m pytest tests/test_cli_comprehensive.py
+
 # Run with coverage
 python -m pytest --cov=safla tests/
 
 # Test MCP integration
 python test_comprehensive_mcp_server.py
+
+# CLI-based system validation
+python safla/cli_main.py system validate
+python safla/cli_main.py doctor
 ```
+
+## 🛠️ Utilities
+
+SAFLA includes a comprehensive collection of utility scripts for system administration, testing, and development:
+
+### System Utilities
+```bash
+# Generate system status reports
+python scripts/system_status_report.py
+
+# Verify system installation and health
+python scripts/verify_system.py
+
+# Build and packaging utilities
+python scripts/build.py
+
+# Installation utilities
+python scripts/install.py
+```
+
+### Testing and Verification
+```bash
+# Comprehensive capability testing
+python scripts/comprehensive_capability_test.py
+
+# Final system verification
+python scripts/final_capability_verification.py
+python scripts/final_system_test.py
+
+# Quick capability tests
+python scripts/quick_capability_test.py
+
+# Security testing
+python scripts/minimal_security_test.py
+```
+
+### Demo Programs
+```bash
+# JWT MCP client demonstration
+python scripts/demo_jwt_mcp_client.py
+```
+
+### Optimization Documentation
+The optimization process and progress are documented in:
+- `docs/optimization/optimization_plan.md` - Comprehensive optimization strategy
+- `docs/optimization/optimization_progress.md` - Current progress tracking
+- `docs/optimization/claude-flow-optimization-guide.md` - Agent coordination guide
+
+All utilities are designed to be run from the SAFLA root directory and require the SAFLA package to be installed or available in the Python path. See [scripts/README.md](scripts/README.md) for detailed information about each utility.
 
 ## 📊 Benchmarking & Performance
 
@@ -534,26 +872,23 @@ SAFLA includes a comprehensive benchmarking framework for measuring and tracking
 ### Running Benchmarks
 
 ```bash
-# Run all benchmarks
-safla benchmark run
+# Run benchmark suites via CLI
+python safla/cli_main.py benchmark run --suite quick
+python safla/cli_main.py benchmark run --suite standard
+python safla/cli_main.py benchmark run --suite comprehensive
 
-# Run specific benchmark suite
-safla benchmark run --suite cli
+# Component-specific benchmarks
+python safla/cli_main.py benchmark component --component memory --iterations 1000
+python safla/cli_main.py benchmark component --component cognition --iterations 500
 
-# Run with parallel execution
-safla benchmark run --parallel
+# Stress testing
+python safla/cli_main.py benchmark stress --duration 300 --load-level 0.8
 
 # Export results
-safla benchmark run --output results.json
+python safla/cli_main.py benchmark run --output benchmark_results.json
 
-# View benchmark results
-safla benchmark results
-
-# Analyze performance trends
-safla benchmark analyze --benchmark cli_help_performance --days 30
-
-# Clean up old results
-safla benchmark cleanup --days 90
+# Compare with previous results
+python safla/cli_main.py benchmark run --compare previous_results.json
 ```
 
 ### Available Benchmarks

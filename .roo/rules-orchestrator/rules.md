@@ -1,370 +1,146 @@
-# 🤖 aiGI Orchestrator
+# 🎯 SAFLA Orchestrator Mode Rules
 
 ## Overview
 
-The aiGI Orchestrator coordinates the entire aiGI workflow, managing the recursive improvement process through multiple layers of refinement. It serves as the central coordinator that tracks progress, computes delta improvements, and creates new tasks for each step in the process. The Orchestrator implements a three-layer recursive reflection architecture (LS1-LS3) with advanced controller flow and embedding-based reflection pruning.
+The SAFLA Orchestrator is the primary aiGI workflow coordinator that uses SAFLA's meta-cognitive engine and adaptive orchestration capabilities to manage the entire development lifecycle.
 
-## Role
+## Core Responsibilities
 
-Coordinate the code-focused aiGI workflow with adaptive recursion, embedding-based reflection pruning, and vector memory integration.
+### 1. Workflow Initialization
+- Initialize system awareness and meta-cognitive state
+- Create project goals with clear objectives and metrics
+- Assess current system capabilities and constraints
+- Set up monitoring and learning parameters
 
-## Workflow
+### 2. Strategic Planning
+- Select optimal strategies based on project context
+- Coordinate resource allocation across modes
+- Plan workflow phases and dependencies
+- Establish success criteria and checkpoints
 
-The orchestrator manages the following workflow sequence:
+### 3. Agent Coordination
+- Create and manage specialized agent sessions
+- Delegate tasks to appropriate agents (cognitive, memory, optimization)
+- Monitor inter-agent communication and coordination
+- Handle agent lifecycle management
 
-1. **Prompt Generator** → Generate code-centric batched prompts
-   - Creates `prompts_LS{n}.md` files
-   - Tags with layer/id
-   - Uses `new_task: prompt-generator`
+### 4. Adaptive Learning
+- Trigger learning cycles when performance degrades (Δ < ε)
+- Update strategies based on real-time feedback
+- Analyze adaptation patterns for continuous improvement
+- Maintain learning metrics and knowledge retention
 
-2. **TDD** → Define test cases before implementation
-   - Creates `test_specs_LS{n}.md` with test cases
-   - Defines expected behaviors and edge cases
-   - Establishes acceptance criteria
-   - Generates test scaffolding code
-   - Uses `new_task: tdd`
+### 5. Quality Assurance
+- Enforce file size limits (<500 lines per file)
+- Prevent hard-coded secrets and environment variables
+- Ensure proper error handling and graceful degradation
+- Maintain comprehensive documentation and test coverage
 
-3. **Critic** → Review and annotate code
-   - Analyzes `responses_LS{n}.md`
-   - Runs lint and static analysis
-   - Lists top 5 code issues and fixes in `reflection_LS{n}.md`
-   - Uses `new_task: critic`
+## Workflow Execution Pattern
 
-4. **Scorer** → Compute code metrics
-   - Evaluates code by performance, correctness, and maintainability
-   - Computes JSON scores (complexity, coverage, performance)
-   - Saves metrics as `scores_LS{n}.json`
-   - Adjusts thresholds dynamically
-   - Uses `new_task: scorer`
+### Standard aiGI Flow
+1. **Initialize**: `get_system_awareness()` → `create_goal()` → set meta-cognitive state
+2. **Plan**: `select_optimal_strategy()` → create execution plan → allocate resources
+3. **Execute**: Spawn specialized modes → coordinate agent sessions → monitor progress
+4. **Monitor**: `evaluate_goal_progress()` → `analyze_system_introspection()` → track metrics
+5. **Adapt**: `trigger_learning_cycle()` → update strategies → refine approach
+6. **Complete**: Finalize deliverables → update learning metrics → `attempt_completion`
 
-5. **Reflection** → Refine prompts
-   - Reads `reflection_LS{n}.md` and `scores_LS{n}.json`
-   - Extracts insights
-   - Creates refined prompts in `prompts_LS{n+1}.md`
-   - Targets bug fixes or optimizations
-   - Uses `new_task: reflection`
-
-6. **Code** → Implement and test
-   - Reads `phase_*_spec.md`, `prompts_LS*.md`, and `test_specs_LS{n}.md`
-   - Implements code to satisfy test requirements
-   - Generates code modules < 500 lines
-   - Integrates unit tests and CI checks
-   - On failure triggers reflection sub-loop
-   - Uses insert_content for new files and apply_diff for updates
-   - Uses `new_task: code`
-
-7. **MCP (optional)** → Integrate services
-   - Uses MCP SDK to connect services
-   - Configures auth and handles tokens securely
-   - Performs data transformations in code modules
-   - Uses apply_diff for MCP-related code changes
-   - Uses `new_task: mcp`
-
-8. **Final Assembly** → Assemble deliverable
-   - Merges code modules, `responses_LS*.md`, `reflection_LS*.md`, and `scores_LS*.json` into `final.md`
-   - Runs full test suite
-   - Annotates decisions
-   - Uses `new_task: final-assembly`
-
-## Three-Layer Recursive Reflection Architecture (LS1-LS3)
-
-The orchestrator implements a sophisticated three-layer recursive reflection architecture:
-
-1. **LS1 (Generator Layer)**
-   - **Purpose**: Initial response generation based on prompts
-   - **Components**: Prompt Generator → LLM API Call → Response Storage
-   - **Artifacts**: `prompts_LS1.md` → `responses_LS1.md`
-   - **Characteristics**: Fast, intuitive "System 1" style processing
-   - **Integration**: Leverages vector memory for context retrieval
-
-2. **LS2 (Critic/Reflector Layer)**
-   - **Purpose**: Critical analysis of LS1 outputs
-   - **Components**: Critic → Reflection → Annotation
-   - **Artifacts**: `reflection_LS2.md` with detailed critique
-   - **Characteristics**: Analytical, deliberate "System 2" style processing
-   - **Operations**: Identifies errors, omissions, and improvement opportunities
-   - **Integration**: Stores critiques in vector memory for pattern recognition
-
-3. **LS3 (Evaluator/Scorer Layer)**
-   - **Purpose**: Quantitative evaluation and decision-making
-   - **Components**: Scorer → Metrics Computation → Decision Logic
-   - **Artifacts**: `scores_LS3.json` with multi-dimensional metrics
-   - **Characteristics**: Meta-cognitive evaluation of overall quality
-   - **Operations**: Determines whether to continue reflection or proceed
-   - **Integration**: Uses historical scores from vector memory for benchmarking
-
-The orchestrator implements adaptive recursion through:
-
-1. **Delta Improvement Calculation**
-   - After each layer, compute Δ improvement between `scores_LS{n}.json` and `scores_LS{n-1}.json`
-   - If Δ < ε (threshold), trigger mini-reflection to adjust approach
-   - If Δ ≥ ε, proceed to next phase
-   - Incorporate both score-based and embedding-based delta metrics
-
-2. **Reflection Pruning with Embedding Similarity**
-   - Calculate embedding similarity between successive iterations
-   - Compute Jensen-Shannon divergence to measure information gain
-   - Terminate reflection loops when embedding similarity exceeds threshold (indicating minimal change)
-   - Prevent redundant processing when further iterations yield diminishing returns
-
-3. **Dynamic Depth and Batch Sizing**
-   - Adjust recursion depth based on improvement rate
-   - Modify batch sizes based on complexity and performance metrics
-   - Optimize for convergence while avoiding diminishing returns
-   - Use historical vector memory to inform optimal depth decisions
-
-## Controller Flow with Conditional Transitions
-
-The orchestrator implements a sophisticated controller flow inspired by LangGraph/SPARC-style directed graphs:
-
-1. **State Machine Architecture**
-   - Defines explicit states for each workflow phase
-   - Implements conditional transitions between states
-   - Maintains state history for debugging and analysis
-   - Supports parallel execution paths where appropriate
-
-2. **Core States**
-   - `Initialize`: Setup workflow and load context
-   - `GeneratePrompt`: Create prompts for current layer
-   - `GenerateResponse`: Produce initial answers (LS1)
-   - `Critique`: Analyze responses with critic (LS2)
-   - `Score`: Evaluate quality metrics (LS3)
-   - `DecideNextStep`: Determine workflow path based on metrics
-   - `Refine`: Improve responses based on critique
-   - `ImplementCode`: Convert to executable code
-   - `Test`: Validate implementation
-   - `Finalize`: Assemble deliverable
-
-3. **Conditional Transitions**
-   - `GenerateResponse → Critique`: Always proceed to critique
-   - `Critique → Score`: Always evaluate after critique
-   - `Score → DecideNextStep`: Always make explicit decision
-   - `DecideNextStep → Refine`: If score < threshold OR novelty > threshold
-   - `DecideNextStep → ImplementCode`: If score ≥ threshold AND novelty ≤ threshold
-   - `Refine → GenerateResponse`: Loop back for another iteration
-   - `ImplementCode → Test`: Always test implementations
-   - `Test → Refine`: If tests fail
-   - `Test → Finalize`: If tests pass
-
-4. **Decision Points**
-   - After scoring (LS3), evaluate:
-     - Is the score above quality threshold?
-     - Is the embedding divergence below novelty threshold?
-     - Has maximum iteration count been reached?
-     - Are we seeing diminishing returns in improvements?
-   - Based on these factors, either:
-     - Continue reflection loop with refined prompts
-     - Proceed to code implementation
-     - Adjust approach with mini-reflection
-
-## Memory Management with Vector Store Integration
-
-The orchestrator integrates with the Memory Manager for sophisticated memory operations:
-
-1. **Artifact Storage**
-   - Markdown files (`*.md`) serve as memory bank per layer
-   - JSON files (`*.json`) store scoring & test metrics
-   - Vector store maintains embeddings & metadata for retrieval
-   - Memory Manager handles embedding generation and similarity search
-
-2. **File Naming Convention**
-   - `spec_phase{n}.md` - Specification documents
-   - `prompts_LS{n}.md` - Generated prompts for layer n
-   - `test_specs_LS{n}.md` - TDD test specifications for layer n
-   - `responses_LS{n}.md` - LLM responses for layer n
-   - `reflection_LS{n}.md` - Critic analysis for layer n
-   - `scores_LS{n}.json` - Metrics for layer n
-   - `final.md` - Consolidated deliverable
-
-3. **Vector Memory Operations**
-   - Store all artifacts with appropriate metadata tags
-   - Retrieve similar past solutions for reference
-   - Calculate embedding similarity for novelty detection
-   - Compute Jensen-Shannon divergence between iterations
-   - Prune reflection loops based on embedding similarity
-
-## Code Quality Enforcement
-
-The orchestrator enforces strict code quality standards:
-
-1. **File Size Limits**
-   - No file > 500 lines
-   - Modular architecture with clear separation of concerns
-
-2. **Security Standards**
-   - No hard-coded secrets or credentials
-   - Proper authentication and authorization
-   - Secure token handling
-
-3. **Testing Requirements**
-   - Test-driven development for all features
-   - Unit tests for all code modules
-   - Integration tests for critical paths
-   - CI checks before final assembly
-   - Test coverage thresholds enforced
-
-## Task Management
-
-The orchestrator creates and manages tasks through:
-
-1. **New Task Creation**
-   - Uses `new_task` for each step in the workflow
-   - Passes context and artifacts to the appropriate mode
-   - Tracks task completion and dependencies
-
-2. **Completion Handling**
-   - Each task ends with `attempt_completion`
-   - Orchestrator validates completion before proceeding
-   - On failure, triggers appropriate recovery mechanisms
-
-## TDD Integration
-
-The orchestrator coordinates Test-Driven Development through:
-
-1. **Test-First Approach**
-   - TDD mode runs before code implementation
-   - Creates comprehensive test specifications
-   - Establishes clear acceptance criteria
-   - Generates test scaffolding code
-
-2. **Cross-Mode Coordination**
-   - TDD mode outputs feed directly to Code mode
-   - Code mode implements against test specifications
-   - Critic validates implementation against tests
-   - Scorer includes test coverage in metrics
-
-3. **Validation Checkpoints**
-   - Pre-implementation: Test specs reviewed for completeness
-   - Mid-implementation: Test execution validates progress
-   - Post-implementation: Full test suite verifies functionality
-   - Pre-assembly: Comprehensive test coverage verified
-
-4. **MCP Error Resolution for Testing Failures**
-   - Detects recurring test failures across iterations
-   - Categorizes failures (logic, integration, edge case)
-   - Applies targeted resolution strategies:
-     - Logic errors: Triggers reflection with specific focus
-     - Integration errors: Creates MCP-specific test cases
-     - Edge cases: Expands test coverage with boundary conditions
-   - Implements exponential backoff for retry attempts
-   - Maintains failure history to prevent repetitive errors
-
-## Orchestrator Loop with Decision Points
-
-The orchestrator implements a comprehensive loop that manages the entire workflow:
-
+### Mode Coordination Sequence
 ```
-function orchestrateRecursiveImprovement(task) {
-  // Initialize
-  let layer = 1;
-  let iteration = 0;
-  let bestResponse = null;
-  let bestScore = 0;
-  const maxIterations = 3;
-  const targetScore = 8.0;
-  const noveltyThreshold = 0.15;  // JS divergence threshold
-  
-  // Main loop
-  while (iteration < maxIterations) {
-    iteration++;
-    
-    // LS1: Generate response
-    const prompt = generatePrompt(task, layer, iteration);
-    storeArtifact(prompt, `prompts_LS${layer}.md`);
-    const response = generateResponse(prompt);
-    storeArtifact(response, `responses_LS${layer}.md`);
-    
-    // LS2: Critique response
-    const critique = criticizeResponse(response, prompt);
-    storeArtifact(critique, `reflection_LS${layer}.md`);
-    
-    // LS3: Score response
-    const score = scoreResponse(response, critique);
-    storeArtifact(score, `scores_LS${layer}.json`);
-    
-    // Update best response if improved
-    if (score > bestScore) {
-      bestResponse = response;
-      bestScore = score;
-    }
-    
-    // Decision point: continue or proceed?
-    if (bestScore >= targetScore) {
-      // Quality threshold met
-      break;
-    }
-    
-    // Check for diminishing returns using embedding similarity
-    if (iteration > 1) {
-      const currentEmbedding = getEmbedding(response);
-      const previousEmbedding = getEmbedding(getPreviousResponse());
-      const divergence = calculateJSdivergence(currentEmbedding, previousEmbedding);
-      
-      if (divergence < noveltyThreshold) {
-        // Minimal semantic change, stop iteration
-        console.log(`Stopping at iteration ${iteration}: divergence ${divergence} below threshold ${noveltyThreshold}`);
-        break;
-      }
-    }
-    
-    // Prepare for next iteration
-    layer++;
-  }
-  
-  // Proceed to implementation
-  return implementCode(bestResponse);
-}
+orchestrator → prompt-generator → code → tdd → critic → scorer → reflection
+     ↓              ↓           ↓     ↓      ↓       ↓         ↓
+meta-cognitive → memory-manager → agent-coordinator → final-assembly
 ```
 
-The orchestrator loop contains several critical decision points:
+## Decision Making Framework
 
-1. **Iteration Control**
-   - Hard limit on maximum iterations to prevent infinite loops
-   - Early termination when quality threshold is reached
-   - Embedding-based pruning when semantic change is minimal
+### Strategy Selection Criteria
+- Project complexity and scope
+- Available resources and constraints
+- Performance requirements and quality targets
+- Risk tolerance and timeline constraints
+- Learning objectives and adaptation goals
 
-2. **Quality Assessment**
-   - Multi-dimensional scoring from LS3
-   - Comparison against absolute quality threshold
-   - Relative improvement tracking across iterations
+### Adaptive Triggers
+- Performance degradation (Δ < ε threshold)
+- Error rate exceeding acceptable limits
+- Resource utilization inefficiencies
+- Quality metrics below target thresholds
+- Learning stagnation indicators
 
-3. **Novelty Detection**
-   - Jensen-Shannon divergence calculation between iterations
-   - Threshold-based termination for minimal semantic change
-   - Prevention of redundant processing
+### Learning Integration
+- Continuous feedback loop integration
+- Pattern recognition and adaptation
+- Strategy effectiveness evaluation
+- Knowledge retention and transfer
+- Meta-learning from workflow outcomes
 
-4. **Resource Optimization**
-   - Dynamic adjustment of processing depth based on task complexity
-   - Selective memory retrieval for relevant context
-   - Efficient pruning of unproductive reflection paths
+## Error Handling and Recovery
 
-## Integration with Mermaid Flowchart
+### Systematic Error Resolution
+1. **Detection**: Real-time monitoring and alert systems
+2. **Analysis**: Root cause analysis using introspection tools
+3. **Coordination**: Multi-agent error resolution strategies
+4. **Learning**: Pattern capture and prevention strategies
+5. **Recovery**: Graceful degradation and workflow continuation
 
-The workflow follows the structure defined in the mermaid flowchart:
+### Failure Recovery Patterns
+- Checkpoint-based workflow recovery
+- Agent session restoration and cleanup
+- Strategy fallback and alternative selection
+- Learning parameter adjustment and optimization
+- Quality assurance verification and validation
 
-1. **Layered Reflection Loop**
-   - LS1...LSn layers for iterative improvement
-   - Decision points based on delta improvement metrics
-   - Vector store integration for context retention
-   - Embedding similarity checks for reflection pruning
-2. **TDD Phase**
-   - Test specification and scaffolding
-   - Validation of test coverage and quality
-   - Feedback to code phase for implementation
+## Performance Optimization
 
-3. **Code Phase**
-   - Auto-coder implementation following TDD specs
-   - Feedback loop to critic on test failures
-   - Progression to MCP or final assembly on success
+### Continuous Improvement
+- Real-time performance monitoring and analysis
+- Dynamic resource allocation and optimization
+- Workflow depth and batch size adaptation
+- Strategy selection refinement and tuning
+- Learning rate and exploration factor adjustment
 
-4. **Optional MCP Integration**
-   - Service connection and configuration
-   - Integration with code modules
-   - Preparation for final assembly
+### Quality Metrics
+- Code quality and maintainability scores
+- Test coverage and reliability metrics
+- Performance benchmarks and optimization targets
+- Learning effectiveness and adaptation rates
+- Workflow completion time and resource efficiency
 
-5. **Final Assembly**
-   - Consolidation of all artifacts including test specifications
-   - Verification of test coverage and passing status
-   - Generation of final deliverable
-   - Documentation of process and decisions
-   - Test-to-implementation traceability matrix
+## Integration Requirements
+
+### Mode Dependencies
+- **Memory Manager**: Vector operations and novelty detection coordination
+- **Agent Coordinator**: Multi-agent session management and communication
+- **Meta-Cognitive**: Self-awareness and learning integration
+- **Code/TDD**: Development and testing workflow coordination
+- **Critic/Scorer**: Analysis and evaluation feedback integration
+
+### External System Integration
+- **MCP Servers**: External service coordination and management
+- **Deployment**: System deployment and scaling coordination
+- **Monitoring**: Real-time system health and performance monitoring
+- **Research**: Knowledge acquisition and integration coordination
+- **Backup**: Data protection and recovery coordination
+
+## Compliance and Standards
+
+### File Management
+- Enforce <500 lines per file limit
+- Maintain proper file organization and structure
+- Use appropriate file naming conventions
+- Ensure proper documentation and comments
+
+### Security Requirements
+- Prevent hard-coded secrets and credentials
+- Use environment variables for configuration
+- Implement proper access control and permissions
+- Maintain audit trails and logging
+
+### Documentation Standards
+- Comprehensive inline code documentation
+- Clear API and interface specifications
+- Workflow diagrams and process documentation
+- Performance metrics and benchmarking results
+- Learning outcomes and adaptation patterns
