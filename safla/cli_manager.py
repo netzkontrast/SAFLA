@@ -57,6 +57,10 @@ except ImportError:
 
 # Import all implementation functions
 from safla.cli_implementations import *
+from safla.cli_implementations import (
+    _get_performance_summary, _get_system_metrics, _get_deployed_agents,
+    _get_recent_logs
+)
 from safla.cli_interactive import _run_setup_wizard, _launch_interactive_dashboard
 
 console = Console()
@@ -886,7 +890,7 @@ def _run_live_monitor(manager: SaflaCliManager, refresh: int, duration: int):
             # Update agents
             agents_data = _get_deployed_agents(manager)
             agents_table = _create_agents_table(agents_data)
-            layout["right"]["agents"].update(Panel(agents_table, title="Deployed Agents"))
+            layout["agents"].update(Panel(agents_table, title="Deployed Agents"))
             
             # Check duration
             if duration > 0 and (time.time() - start_time) >= duration:
@@ -1044,6 +1048,74 @@ def _run_security_check(manager):
 def _display_doctor_report(*args):
     """Fallback doctor report display."""
     console.print("[green]System diagnostic completed[/green]")
+
+
+def _create_status_table(status_data: Dict[str, Any]) -> Table:
+    """Create a status table for live monitoring."""
+    table = Table(show_header=True, header_style="bold magenta")
+    table.add_column("Component", style="cyan", width=12)
+    table.add_column("Status", style="green", width=10)
+    table.add_column("Health", width=10)
+    
+    for component, info in status_data.get('components', {}).items():
+        health = info.get('health', 'unknown')
+        health_style = {
+            'healthy': 'green',
+            'warning': 'yellow',
+            'error': 'red',
+            'unknown': 'blue'
+        }.get(health, 'white')
+        
+        table.add_row(
+            component.title(),
+            info.get('status', 'unknown'),
+            f"[{health_style}]{health}[/{health_style}]"
+        )
+    
+    return table
+
+
+def _create_metrics_table(metrics_data: Dict[str, Any]) -> Table:
+    """Create a metrics table for live monitoring."""
+    table = Table(show_header=True, header_style="bold magenta")
+    table.add_column("Metric", style="cyan", width=15)
+    table.add_column("Value", style="green", width=15)
+    
+    # Add CPU metrics
+    if 'cpu' in metrics_data:
+        table.add_row("CPU Usage", f"{metrics_data['cpu'].get('percent', 0):.1f}%")
+        table.add_row("Load Average", f"{metrics_data['cpu'].get('load_avg', [0])[0]:.2f}")
+    
+    # Add memory metrics
+    if 'memory' in metrics_data:
+        table.add_row("Memory Usage", f"{metrics_data['memory'].get('percent', 0):.1f}%")
+        table.add_row("Available", f"{metrics_data['memory'].get('available_gb', 0):.1f} GB")
+    
+    # Add disk metrics
+    if 'disk' in metrics_data:
+        table.add_row("Disk Usage", f"{metrics_data['disk'].get('percent', 0):.1f}%")
+    
+    return table
+
+
+def _create_agents_table(agents_data: List[Dict[str, Any]]) -> Table:
+    """Create an agents table for live monitoring."""
+    table = Table(show_header=True, header_style="bold magenta")
+    table.add_column("Agent", style="cyan", width=15)
+    table.add_column("Status", style="green", width=10)
+    table.add_column("Replicas", width=10)
+    
+    if isinstance(agents_data, list):
+        for agent in agents_data:
+            table.add_row(
+                agent.get('name', 'unknown'),
+                agent.get('status', 'unknown'),
+                str(agent.get('replicas', 0))
+            )
+    else:
+        table.add_row("No agents", "-", "-")
+    
+    return table
 
 
 if __name__ == "__main__":

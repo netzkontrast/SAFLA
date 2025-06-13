@@ -89,6 +89,24 @@ npx claude-flow sparc run integration "integrate authentication with user manage
 - **`docs-writer`**: Documentation creation and maintenance
 - **`devops`**: Deployment and infrastructure management
 - **`mcp`**: External service integration
+- **`swarm`**: Multi-agent coordination for complex tasks
+
+## Claude Code Slash Commands
+
+Claude Code slash commands are available in `.claude/commands/`:
+
+### Project Commands
+- `/sparc`: Execute SPARC methodology workflows
+- `/sparc-<mode>`: Run specific SPARC mode (e.g., /sparc-architect)
+- `/claude-flow-help`: Show all Claude-Flow commands
+- `/claude-flow-memory`: Interact with memory system
+- `/claude-flow-swarm`: Coordinate multi-agent swarms
+
+### Using Slash Commands
+1. Type `/` in Claude Code to see available commands
+2. Select a command or type its name
+3. Commands are context-aware and project-specific
+4. Custom commands can be added to `.claude/commands/`
 
 ## Code Style and Best Practices
 
@@ -179,13 +197,18 @@ npx claude-flow sparc run security-review "token handling security implications"
 
 ## Configuration Files
 
+### Claude Code Integration
+- **`.claude/commands/`**: Claude Code slash commands for all SPARC modes
+- **`.claude/logs/`**: Conversation and session logs
+
 ### SPARC Configuration
-- **`.roomodes`**: SPARC mode definitions and configurations
-- **`.roo/`**: Templates, workflows, and mode-specific rules
+- **`.roomodes`**: SPARC mode definitions and configurations (auto-generated)
+- **`.roo/`**: SPARC templates and workflows (auto-generated)
 
 ### Claude-Flow Configuration
 - **`memory/`**: Persistent memory and session data
 - **`coordination/`**: Multi-agent coordination settings
+- **`CLAUDE.md`**: Project instructions for Claude Code
 
 ## Git Workflow Integration
 
@@ -240,5 +263,6 @@ This SPARC-enabled project follows a systematic development approach:
 - Follow the Red-Green-Refactor cycle during TDD phases
 - Document architectural decisions in memory for future reference
 - Regular security reviews for any authentication or data handling code
+- Claude Code slash commands provide quick access to SPARC modes
 
 For more information about SPARC methodology, see: https://github.com/ruvnet/claude-code-flow/docs/sparc.md
