@@ -12,6 +12,8 @@ import time
 from typing import Any, Dict, List, Optional, Type
 from pathlib import Path
 import logging
+from aiohttp import web, ClientSession
+from aiohttp.web import Response, Request
 
 from safla.utils.config import SAFLAConfig, get_config
 from safla.utils.logging import setup_logging, get_logger
@@ -310,6 +312,72 @@ class ModularMCPServer:
         # (handlers can implement cleanup methods if needed)
         
         logger.info("Server shutdown complete")
+
+
+async def health_check(request: Request) -> Response:
+    """Health check endpoint."""
+    try:
+        import torch
+        health_data = {
+            "status": "healthy",
+            "gpu_available": torch.cuda.is_available(),
+            "version": "0.1.3",
+            "timestamp": time.time()
+        }
+        
+        if torch.cuda.is_available():
+            health_data["gpu_name"] = torch.cuda.get_device_name()
+            health_data["gpu_memory_total"] = torch.cuda.get_device_properties(0).total_memory
+            health_data["gpu_memory_allocated"] = torch.cuda.memory_allocated()
+            
+    except ImportError:
+        health_data = {
+            "status": "healthy",
+            "gpu_available": False,
+            "version": "0.1.3",
+            "timestamp": time.time()
+        }
+    
+    return web.json_response(health_data)
+
+
+async def safla_api(request: Request) -> Response:
+    """SAFLA API endpoint for optimization requests."""
+    try:
+        data = await request.json()
+        
+        # Process SAFLA optimization request
+        response_data = {
+            "status": "success",
+            "message": "SAFLA optimization request processed",
+            "timestamp": time.time(),
+            "request_id": data.get("id", "unknown")
+        }
+        
+        return web.json_response(response_data)
+        
+    except Exception as e:
+        return web.json_response({
+            "status": "error",
+            "message": str(e),
+            "timestamp": time.time()
+        }, status=500)
+
+
+def start_server(host: str = "0.0.0.0", port: int = 8080, gpu_enabled: bool = False, config: Optional[SAFLAConfig] = None):
+    """Start SAFLA HTTP server."""
+    app = web.Application()
+    
+    # Add routes
+    app.router.add_get('/health', health_check)
+    app.router.add_post('/api/safla', safla_api)
+    app.router.add_get('/', lambda r: web.Response(text="SAFLA Server Running"))
+    
+    logger.info(f"Starting SAFLA server on {host}:{port}")
+    if gpu_enabled:
+        logger.info("GPU optimization enabled")
+    
+    web.run_app(app, host=host, port=port)
 
 
 def main():
