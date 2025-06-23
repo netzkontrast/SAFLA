@@ -49,15 +49,25 @@ COPY examples/ ./examples/
 # Install Python dependencies (GPU optimized)
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 RUN pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
-RUN pip install --no-cache-dir faiss-cpu
+
+# Install FAISS GPU version using conda approach
+RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh && \
+    bash miniconda.sh -b -p /opt/conda && \
+    rm miniconda.sh
+ENV PATH="/opt/conda/bin:$PATH"
+RUN conda install -c conda-forge faiss-gpu -y || pip install faiss-cpu
+
 RUN pip install --no-cache-dir -e .
 
 # Install additional GPU optimization packages
 RUN pip install --no-cache-dir \
+    flash-attn \
+    bitsandbytes \
     accelerate \
     optimum \
     transformers[torch] \
-    sentence-transformers
+    sentence-transformers \
+    xformers
 
 # Create data directories
 RUN mkdir -p /data/models /data/checkpoints /data/logs /data/memory

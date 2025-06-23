@@ -33,8 +33,7 @@ primary_region = "ord"
     path = "/health"
 
 [vm]
-  size = "performance-8x"
-  memory = "32gb"
+  size = "a100-40gb"
 
 [deploy]
   strategy = "immediate"
