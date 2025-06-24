@@ -6,6 +6,11 @@ A sophisticated AI/ML system implementing autonomous learning and adaptation wit
 
 SAFLA is a production-ready autonomous AI system that combines advanced memory management, meta-cognitive reasoning, distributed orchestration, and safety validation. The system implements a multi-layered architecture for intelligent agents capable of self-awareness, continuous learning, and safe autonomous operation.
 
+## Install from PyPI
+```
+pip install safla
+```
+
 ### 🌟 Key Features
 
 - **🧠 Hybrid Memory Architecture**: Multi-layered memory system with vector, episodic, semantic, and working memory
@@ -85,32 +90,6 @@ SAFLA enables breakthrough applications in:
 - **Capability Delta**: New capabilities acquisition tracking relative to total capability space
 - **Adaptive Weighting**: Context-aware weight adjustment for different operational priorities
 
-## 📁 Project Structure
-
-```
-SAFLA/
-├── safla/                    # Main package
-│   ├── core/                 # Core system components
-│   │   ├── hybrid_memory.py     # Hybrid memory architecture
-│   │   ├── meta_cognitive_engine.py  # Meta-cognitive engine
-│   │   ├── mcp_orchestration.py     # MCP orchestration
-│   │   ├── safety_validation.py     # Safety validation framework
-│   │   └── delta_evaluation.py      # Delta evaluation system
-│   ├── mcp/                  # MCP server and handlers
-│   ├── utils/                # Utilities and helpers
-│   ├── cli_manager.py        # Main CLI structure
-│   ├── cli_implementations.py # CLI command implementations
-│   ├── cli_interactive.py    # Interactive CLI components
-│   └── cli_main.py          # CLI entry point
-├── tests/                    # Test suite
-│   ├── test_cli_comprehensive.py # CLI test suite
-│   └── integration/          # Integration tests
-├── docs/                     # Documentation
-├── examples/                 # Usage examples
-├── CLI_USAGE_GUIDE.md       # Complete CLI documentation
-└── benchmarks/              # Performance benchmarks
-```
-
 ## 🚀 Quick Start
 
 ### Installation
@@ -168,57 +147,7 @@ cp .env.example .env
 - Operating System: Windows, macOS, or Linux
 - Memory: Minimum 512MB RAM
 - Disk Space: At least 100MB free space
-
-## 📁 Project Structure
-
-SAFLA follows a well-organized project structure to maintain clarity and ease of development:
-
-```
-SAFLA/
-├── safla/                    # Core SAFLA package
-│   ├── core/                 # Core system components
-│   ├── mcp/                  # MCP server implementation
-│   ├── utils/                # Utility functions
-│   └── cli/                  # Command-line interface
-├── development/              # Development utilities and tools
-│   ├── debug_config.json     # Debug configuration
-│   ├── demo_script.py        # Demo and example scripts
-│   ├── fix_*.py             # Bug fixes and patches
-│   └── implementation_*.md   # Implementation summaries
-├── testing/                  # Test files and results
-│   ├── test_*.py            # Python test files
-│   ├── test_*.js            # JavaScript test files
-│   ├── benchmark_*.json     # Benchmark results
-│   └── validation_*.md      # Validation reports
-├── config/                   # Configuration files
-│   ├── *.json               # Environment configurations
-│   └── sample.env           # Sample environment file
-├── integration/              # MCP integration components
-│   ├── mcp_integration.*    # MCP integration files
-│   └── *.md                 # Integration documentation
-├── benchmarks/               # Performance benchmarking
-├── data/                     # Data files and datasets
-├── docs/                     # Documentation
-├── examples/                 # Usage examples
-├── memory_bank/              # Memory system data
-├── plans/                    # Project planning documents
-├── research/                 # Research and analysis
-├── scripts/                  # Utility scripts
-├── tests/                    # Main test directory
-└── requirements.txt          # Python dependencies
-```
-
-### Key Directories
-
-- **`safla/`**: The main Python package containing all core functionality
-- **`development/`**: Development utilities, debug configs, and implementation tools
-- **`testing/`**: Comprehensive test files, benchmark results, and validation reports
-- **`config/`**: Configuration files for different environments and setups
-- **`integration/`**: MCP integration components and related documentation
-- **`benchmarks/`**: Performance benchmarking tools and results
-- **`docs/`**: Comprehensive documentation and guides
-- **`examples/`**: Usage examples and sample implementations
-
+ 
 ### Basic Usage
 
 #### Python SDK
@@ -414,7 +343,7 @@ fi
 
 ### Complete CLI Reference
 
-For detailed usage of all commands, options, and examples, see the [CLI Usage Guide](CLI_USAGE_GUIDE.md).
+For detailed usage of all commands, options, and examples, see the [CLI Usage Guide](docs/CLI_USAGE_GUIDE.md).
 
 ## 🔗 Enhanced MCP Integration & Claude Code
 
@@ -658,13 +587,13 @@ Verify your Claude Code integration:
 
 ```bash
 # Test MCP server discovery
-python3 test_mcp_discovery.py
+python3 tests/test_mcp_discovery.py
 
-# Test all tools functionality
-python3 test_mcp_comprehensive.py
+# Test MCP tool functionality
+python3 tests/test_mcp_tool_call.py
 
-# Test performance benchmarks
-python3 test_mcp_performance.py
+# Test MCP configuration
+python3 tests/test_mcp_config.py
 ```
 
 Expected output: **✅ All 14 tools discovered and operational**
