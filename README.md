@@ -10,7 +10,7 @@ SAFLA is a production-ready autonomous AI system that combines advanced memory m
 
 - **🧠 Hybrid Memory Architecture**: Multi-layered memory system with vector, episodic, semantic, and working memory
 - **🤖 Meta-Cognitive Engine**: Self-awareness, goal management, strategy selection, and adaptive learning
-- **🔗 MCP Integration**: Full Model Context Protocol support with 24 tools across 6 domains
+- **🔗 Enhanced MCP Integration**: Full Model Context Protocol support with 14 enhanced tools including text analysis, pattern detection, knowledge graphs, and real-time monitoring
 - **🛡️ Safety & Validation**: Comprehensive safety constraints, risk assessment, and rollback mechanisms
 - **📊 Delta Evaluation**: Formal quantification of system improvements across multiple dimensions
 - **🔧 CLI Management System**: Complete command-line interface for system administration and operations
@@ -64,12 +64,12 @@ SAFLA enables breakthrough applications in:
 - **Agent Management**: Deploy, scale, monitor, and manage agent instances
 - **Interactive Features**: TUI dashboard, setup wizard, and comprehensive help system
 
-#### 4. MCP Integration & SDK
-- **24 Comprehensive Tools**: Deployment, optimization, admin, testing, benchmarking, and agent interaction
-- **15 Real-time Resources**: Configuration, status, metrics, logs, and system information
-- **Full Protocol Support**: JSON-RPC 2.0 compliant MCP server with stdio communication
-- **JWT Authentication**: Secure token-based authentication with role-based access control
-- **Python SDK**: Easy-to-use Python API for programmatic access and integration
+#### 4. Enhanced MCP Integration & SDK
+- **14 Enhanced Tools**: Text analysis, pattern detection, knowledge graphs, batch processing, memory management, parameter optimization, session handling, benchmarking, and health monitoring
+- **Dual Interface Support**: Both HTTP API (deployed on Fly.io) and stdio MCP protocol for maximum compatibility
+- **Full Protocol Compliance**: JSON-RPC 2.0 compliant with proper tool discovery and calling mechanisms
+- **Production Deployment**: Live deployment at https://safla.fly.dev with enhanced endpoints
+- **Claude Code Integration**: Seamless integration with Claude Code via .roo/mcp.json configuration
 
 #### 5. Safety & Validation Framework
 - **Safety Constraints**: Hard and soft limits with configurable violation actions
@@ -416,49 +416,45 @@ fi
 
 For detailed usage of all commands, options, and examples, see the [CLI Usage Guide](CLI_USAGE_GUIDE.md).
 
-## 🔗 MCP Integration
+## 🔗 Enhanced MCP Integration
 
-SAFLA provides comprehensive Model Context Protocol integration with 24 tools across 6 domains:
+SAFLA provides comprehensive Model Context Protocol integration with **14 enhanced tools** providing advanced AI capabilities:
 
-### Available Tools
+### Enhanced Tool Suite
 
-#### Core System (4 tools)
-- `validate_installation` - Validate SAFLA installation and configuration
-- `get_system_info` - Get comprehensive system information and status
-- `check_gpu_status` - Check GPU availability and CUDA status
-- `get_config_summary` - Get SAFLA configuration summary
+#### 🧠 **Core SAFLA Tools** (4 tools)
+- `generate_embeddings` - Generate embeddings using SAFLA's extreme-optimized engine (1.75M+ ops/sec)
+- `store_memory` - Store information in SAFLA's hybrid memory system with episodic/semantic/procedural types
+- `retrieve_memories` - Search and retrieve from SAFLA's memory system with similarity matching
+- `get_performance` - Get comprehensive SAFLA performance metrics and system status
 
-#### Deployment (3 tools)
-- `deploy_safla_instance` - Deploy new SAFLA instances with custom configurations
-- `check_deployment_status` - Monitor deployment health and resource usage
-- `scale_deployment` - Scale deployment resources (CPU/memory)
+#### 🚀 **Enhanced AI Tools** (10 tools)
+- `analyze_text` - Deep semantic analysis with entity extraction, sentiment analysis, and insights
+- `detect_patterns` - Advanced pattern detection with frequency analysis and configurable thresholds
+- `build_knowledge_graph` - Dynamic knowledge graph construction with nodes, edges, and relationship mapping
+- `batch_process` - High-performance batch processing with embeddings and parallel execution
+- `consolidate_memories` - Memory consolidation and compression for efficiency optimization
+- `optimize_parameters` - Auto-tune SAFLA parameters for specific workloads with adaptive learning
+- `create_session` - Create and manage persistent interaction sessions with context preservation
+- `export_memory_snapshot` - Export memory snapshots in multiple formats with metadata
+- `run_benchmark` - Comprehensive performance benchmarking with throughput and latency metrics
+- `monitor_health` - Real-time system health monitoring with predictive analytics
 
-#### Optimization (3 tools)
-- `optimize_memory_usage` - Optimize memory usage with configurable levels
-- `optimize_vector_operations` - Optimize vector operations with GPU acceleration
-- `analyze_performance_bottlenecks` - Analyze system performance and identify bottlenecks
+### 🌐 **Dual Interface Architecture**
 
-#### Administration (4 tools)
-- `manage_user_sessions` - Manage user sessions (list, create, delete, suspend)
-- `backup_safla_data` - Create compressed backups of SAFLA data
-- `restore_safla_data` - Restore SAFLA data from backups with integrity verification
-- `monitor_system_health` - Monitor system health with configurable alerts
+SAFLA provides **two complementary interfaces** for maximum flexibility:
 
-#### Testing (3 tools)
-- `run_integration_tests` - Run comprehensive integration test suites
-- `validate_memory_operations` - Validate memory operations and data integrity
-- `test_mcp_connectivity` - Test MCP protocol connectivity and compliance
+#### 1. **HTTP API Interface** (Production Deployment)
+- **Live Deployment**: https://safla.fly.dev
+- **Direct API Access**: RESTful JSON-RPC 2.0 endpoints
+- **High Performance**: Optimized for production workloads
+- **Real-time Processing**: Immediate response to API calls
 
-#### Benchmarking (3 tools)
-- `benchmark_vector_operations` - Benchmark vector operations performance
-- `benchmark_memory_performance` - Benchmark memory subsystem performance
-- `benchmark_mcp_throughput` - Benchmark MCP protocol throughput and latency
-
-#### Agent Interaction (4 tools)
-- `create_agent_session` - Create new agent interaction sessions
-- `interact_with_agent` - Send commands to agent sessions
-- `list_agent_sessions` - List active/inactive agent sessions
-- `terminate_agent_session` - Terminate agent sessions
+#### 2. **MCP Protocol Interface** (Claude Code Integration)
+- **stdio Communication**: Standard MCP protocol via stdin/stdout
+- **Tool Discovery**: Automatic tool enumeration and schema validation
+- **Claude Code Compatible**: Seamless integration with AI development environments
+- **Local Execution**: Connects to deployed backend for processing
 
 ### Available Resources
 
@@ -480,47 +476,47 @@ SAFLA provides 15 real-time resources for system monitoring and information:
 - `safla://agent-sessions` - Active agent interaction sessions
 - `safla://agent-capabilities` - Available agent types and their capabilities
 
-### MCP Configuration
+### 🔧 **MCP Configuration for Claude Code**
 
-Add SAFLA to your MCP configuration (`.roo/mcp.json`):
+Add SAFLA to your Claude Code MCP configuration (`.roo/mcp.json`):
 
 ```json
 {
   "mcpServers": {
     "safla": {
-      "command": "python",
-      "args": ["safla/mcp_stdio_server.py"],
-      "alwaysAllow": [
-        "validate_installation",
-        "get_system_info",
-        "check_gpu_status",
-        "get_config_summary",
-        "deploy_safla_instance",
-        "check_deployment_status",
-        "scale_deployment",
-        "optimize_memory_usage",
-        "optimize_vector_operations",
-        "analyze_performance_bottlenecks",
-        "manage_user_sessions",
-        "backup_safla_data",
-        "restore_safla_data",
-        "monitor_system_health",
-        "run_integration_tests",
-        "validate_memory_operations",
-        "test_mcp_connectivity",
-        "benchmark_vector_operations",
-        "benchmark_memory_performance",
-        "benchmark_mcp_throughput",
-        "create_agent_session",
-        "interact_with_agent",
-        "list_agent_sessions",
-        "terminate_agent_session"
+      "command": "python3",
+      "args": [
+        "/workspaces/SAFLA/safla_mcp_enhanced.py"
       ],
-      "timeout": 60
+      "env": {
+        "SAFLA_REMOTE_URL": "https://safla.fly.dev"
+      }
     }
   }
 }
 ```
+
+This configuration enables Claude Code to:
+- **Discover all 14 tools** automatically via the MCP protocol
+- **Connect to the deployed backend** for processing via the remote URL
+- **Provide immediate access** to advanced AI capabilities in your development environment
+
+### 🧪 **Testing the Integration**
+
+Verify your MCP integration is working:
+
+```bash
+# Test tool discovery
+python3 test_mcp_discovery.py
+
+# Test tool functionality  
+python3 test_mcp_tool_call.py
+
+# Test complete configuration
+python3 test_mcp_config.py
+```
+
+Expected output: **✅ All 14 tools discovered and functional**
 
 ### JWT Authentication
 
@@ -577,37 +573,53 @@ export JWT_EXPIRATION_TIME=3600  # Access token expiration in seconds
 
 See [JWT Authentication Documentation](docs/JWT_AUTHENTICATION.md) for complete details.
 
-### Using MCP Tools
+### 💻 **Using Enhanced MCP Tools**
 
+#### Via HTTP API (Direct Access)
 ```python
-# Example: Using MCP tools programmatically
-from safla.integrations import FastMCPClient
+import requests
+import json
 
-client = FastMCPClient()
+# Direct API call to deployed instance
+def call_safla_api(method, params):
+    response = requests.post("https://safla.fly.dev/api/safla", json={
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": method,
+        "params": params
+    })
+    return response.json()
 
-# Validate installation
-result = await client.call_tool("validate_installation", {})
-print(f"Installation valid: {result['status'] == 'valid'}")
-
-# Deploy new instance
-deployment = await client.call_tool("deploy_safla_instance", {
-    "instance_name": "production-safla",
-    "environment": "production",
-    "config_overrides": {
-        "memory": {"max_memories": 50000},
-        "safety": {"memory_limit": 2000000000}
-    }
+# Analyze text with sentiment and entity extraction
+result = call_safla_api("analyze_text", {
+    "text": "SAFLA is an amazing AI system with advanced capabilities!",
+    "analysis_type": "all",
+    "depth": "deep"
 })
 
-# Monitor system health
-health = await client.call_tool("monitor_system_health", {
-    "check_interval": 30,
-    "alert_thresholds": {
-        "memory_usage": 0.8,
-        "cpu_usage": 0.9
-    }
+# Build knowledge graph from related concepts
+graph = call_safla_api("build_knowledge_graph", {
+    "texts": ["AI systems use neural networks", "Neural networks enable machine learning"],
+    "relationship_depth": 2
+})
+
+# Batch process multiple items with high performance
+batch_result = call_safla_api("batch_process", {
+    "data": ["item1", "item2", "item3", "item4", "item5"],
+    "operation": "embed",
+    "batch_size": 256
 })
 ```
+
+#### Via Claude Code (MCP Integration)
+When integrated with Claude Code, all tools are automatically available:
+1. **Text Analysis**: Ask Claude Code to analyze text sentiment and extract entities
+2. **Pattern Detection**: Request pattern analysis on data sets
+3. **Knowledge Graphs**: Generate dynamic knowledge graphs from concepts
+4. **Batch Processing**: Process large datasets efficiently
+5. **System Monitoring**: Get real-time health and performance metrics
+
+The tools appear in Claude Code's tool palette and can be used naturally in conversations.
 
 ## 📊 Delta Evaluation
 
