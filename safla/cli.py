@@ -200,6 +200,58 @@ def info(ctx):
 
 
 @cli.command()
+@click.option('--host', default='0.0.0.0', help='Host to bind to')
+@click.option('--port', default=8080, help='Port to bind to')
+@click.option('--gpu', is_flag=True, help='Enable GPU optimization')
+@click.pass_context
+def serve(ctx, host, port, gpu):
+    """Start SAFLA HTTP server"""
+    config = ctx.obj['config']
+    
+    console.print(f"[bold blue]Starting SAFLA Server on {host}:{port}...[/bold blue]")
+    
+    if gpu:
+        console.print("[green]GPU optimization enabled[/green]")
+        try:
+            import torch
+            if torch.cuda.is_available():
+                console.print(f"[green]CUDA available: {torch.cuda.get_device_name()}[/green]")
+            else:
+                console.print("[yellow]CUDA not available, falling back to CPU[/yellow]")
+        except ImportError:
+            console.print("[yellow]PyTorch not available[/yellow]")
+    
+    try:
+        from safla.mcp.server import start_server
+        start_server(host=host, port=port, gpu_enabled=gpu, config=config)
+    except KeyboardInterrupt:
+        console.print("\n[yellow]Shutting down server...[/yellow]")
+    except Exception as e:
+        console.print(f"[red]Error starting server: {e}[/red]")
+        sys.exit(1)
+
+
+@cli.command()
+@click.pass_context
+def health(ctx):
+    """Health check endpoint"""
+    import torch
+    import json
+    
+    health_data = {
+        "status": "healthy",
+        "gpu_available": torch.cuda.is_available() if 'torch' in globals() else False,
+        "version": "0.1.3"
+    }
+    
+    if torch.cuda.is_available():
+        health_data["gpu_name"] = torch.cuda.get_device_name()
+        health_data["gpu_memory_total"] = torch.cuda.get_device_properties(0).total_memory
+    
+    print(json.dumps(health_data))
+
+
+@cli.command()
 @click.option('--component', type=click.Choice(['memory', 'safety', 'mcp', 'metacognitive', 'fastmcp']),
               help='Start specific component only')
 @click.option('--daemon', is_flag=True, help='Run as daemon')

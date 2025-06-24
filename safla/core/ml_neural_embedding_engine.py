@@ -69,6 +69,15 @@ class EmbeddingConfig:
     evaluation_frequency: int = 100
     clustering_algorithm: str = "kmeans"
     anomaly_detection_threshold: float = 0.8
+    # GPU Optimization settings
+    use_flash_attention_2: bool = True
+    mixed_precision: str = "fp16"  # fp16, bf16, or None
+    torch_dtype: str = "float16"
+    use_sdpa: bool = True  # Scaled Dot Product Attention
+    quantization_bits: Optional[int] = None  # 4, 8, or None for full precision
+    gradient_checkpointing: bool = True
+    dataloader_num_workers: int = 4
+    pin_memory: bool = True
 
 
 @dataclass

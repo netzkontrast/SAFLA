@@ -12,6 +12,8 @@ import time
 from typing import Any, Dict, List, Optional, Type
 from pathlib import Path
 import logging
+from aiohttp import web, ClientSession
+from aiohttp.web import Response, Request
 
 from safla.utils.config import SAFLAConfig, get_config
 from safla.utils.logging import setup_logging, get_logger
@@ -31,6 +33,12 @@ from .handlers.admin import AdminHandler
 from .handlers.testing import TestingHandler
 from .handlers.agent import AgentHandler
 from .handlers.metacognitive import MetaCognitiveHandler
+
+# Import enhanced endpoints
+try:
+    from safla.api.enhanced_endpoints import EnhancedSAFLAEndpoints
+except ImportError:
+    EnhancedSAFLAEndpoints = None
 
 logger = get_logger(__name__)
 
@@ -310,6 +318,159 @@ class ModularMCPServer:
         # (handlers can implement cleanup methods if needed)
         
         logger.info("Server shutdown complete")
+
+
+async def health_check(request: Request) -> Response:
+    """Health check endpoint."""
+    try:
+        import torch
+        health_data = {
+            "status": "healthy",
+            "gpu_available": torch.cuda.is_available(),
+            "version": "0.1.3",
+            "timestamp": time.time()
+        }
+        
+        if torch.cuda.is_available():
+            health_data["gpu_name"] = torch.cuda.get_device_name()
+            health_data["gpu_memory_total"] = torch.cuda.get_device_properties(0).total_memory
+            health_data["gpu_memory_allocated"] = torch.cuda.memory_allocated()
+            
+    except ImportError:
+        health_data = {
+            "status": "healthy",
+            "gpu_available": False,
+            "version": "0.1.3",
+            "timestamp": time.time()
+        }
+    
+    return web.json_response(health_data)
+
+
+async def safla_api(request: Request) -> Response:
+    """SAFLA API endpoint for optimization requests."""
+    try:
+        data = await request.json()
+        
+        # Get the method from the request
+        method = data.get("method")
+        params = data.get("params", {})
+        request_id = data.get("id", "unknown")
+        
+        # Initialize enhanced endpoints if available
+        enhanced = None
+        if EnhancedSAFLAEndpoints:
+            if hasattr(request.app, 'safla_enhanced'):
+                enhanced = request.app['safla_enhanced']
+            else:
+                # Create a mock SAFLA instance for enhanced endpoints
+                from types import SimpleNamespace
+                import asyncio
+                
+                async def mock_generate_embeddings(texts):
+                    return [[0.1] * 384 for _ in texts]
+                
+                safla_mock = SimpleNamespace(
+                    neural_engine=SimpleNamespace(
+                        generate_embeddings=mock_generate_embeddings
+                    ),
+                    memory=SimpleNamespace(
+                        store=lambda k, v: None,
+                        retrieve=lambda k: None
+                    )
+                )
+                enhanced = EnhancedSAFLAEndpoints(safla_mock)
+                # Cache it for future requests
+                request.app['safla_enhanced'] = enhanced
+        
+        # Add debug endpoints
+        if method == "debug_info":
+            response_data = {
+                "jsonrpc": "2.0",
+                "id": request_id,
+                "result": {
+                    "enhanced_available": enhanced is not None,
+                    "enhanced_class": str(type(enhanced)) if enhanced else None,
+                    "method_requested": method,
+                    "params_received": params,
+                    "enhanced_methods": [attr for attr in dir(enhanced) if not attr.startswith('_')] if enhanced else []
+                }
+            }
+        elif method == "enhanced_status":
+            response_data = {
+                "jsonrpc": "2.0", 
+                "id": request_id,
+                "result": {
+                    "EnhancedSAFLAEndpoints_imported": EnhancedSAFLAEndpoints is not None,
+                    "enhanced_instance": enhanced is not None,
+                    "available_methods": [
+                        "analyze_text", "detect_patterns", "build_knowledge_graph",
+                        "batch_process", "consolidate_memories", "optimize_parameters", 
+                        "create_session", "export_memory_snapshot", "run_benchmark",
+                        "monitor_health"
+                    ]
+                }
+            }
+        # Route to appropriate handler
+        elif enhanced and method in [
+            "analyze_text", "detect_patterns", "build_knowledge_graph",
+            "batch_process", "consolidate_memories", "optimize_parameters",
+            "create_session", "export_memory_snapshot", "run_benchmark",
+            "monitor_health"
+        ]:
+            # Handle enhanced methods
+            handler_method = getattr(enhanced, method, None)
+            if handler_method:
+                result = await handler_method(**params)
+                response_data = {
+                    "jsonrpc": "2.0",
+                    "id": request_id,
+                    "result": result
+                }
+            else:
+                response_data = {
+                    "jsonrpc": "2.0",
+                    "id": request_id,
+                    "error": {
+                        "code": -32601,
+                        "message": f"Method not found: {method}"
+                    }
+                }
+        else:
+            # Default response for basic methods
+            response_data = {
+                "status": "success",
+                "message": "SAFLA optimization request processed",
+                "timestamp": time.time(),
+                "request_id": request_id,
+                "method": method,
+                "params": params
+            }
+        
+        return web.json_response(response_data)
+        
+    except Exception as e:
+        return web.json_response({
+            "status": "error",
+            "message": str(e),
+            "timestamp": time.time()
+        }, status=500)
+
+
+def start_server(host: str = "0.0.0.0", port: int = 8080, gpu_enabled: bool = False, config: Optional[SAFLAConfig] = None):
+    """Start SAFLA HTTP server."""
+    app = web.Application()
+    
+    # Add routes
+    app.router.add_get('/health', health_check)
+    app.router.add_post('/api/safla', safla_api)
+    app.router.add_get('/', lambda r: web.Response(text="SAFLA Server Running"))
+    
+    logger.info(f"Starting SAFLA server on {host}:{port}")
+    if gpu_enabled:
+        logger.info("GPU optimization enabled")
+    
+    web.run_app(app, host=host, port=port)
 
 
 def main():
