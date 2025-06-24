@@ -39,6 +39,29 @@ SAFLA is specifically designed to enhance:
 - **Real-time response**: Immediate results for complex queries
 - **Efficient memory**: Smart compression and optimization
 
+
+## 🏗️ **How SAFLA Works**
+
+### **🧠 Neural Memory System**
+SAFLA uses a hybrid neural architecture with multiple memory types:
+- **Vector Memory**: Stores embeddings for semantic similarity search
+- **Episodic Memory**: Remembers sequences of events and experiences  
+- **Semantic Memory**: Builds knowledge graphs of concepts and relationships
+- **Working Memory**: Manages active context with attention mechanisms
+
+### **🔄 Self-Learning Loop**
+1. **Experience**: Processes interactions and outcomes
+2. **Learn**: Identifies patterns and successful strategies  
+3. **Adapt**: Modifies behavior based on what works
+4. **Improve**: Gets better at similar tasks over time
+
+### **🛡️ Safety Framework**
+- **Constraint Engine**: Enforces safety rules and boundaries
+- **Risk Assessment**: Evaluates potential dangers before actions
+- **Rollback System**: Can undo changes if problems occur
+- **Emergency Stop**: Immediate halt capability for safety
+
+
 ## 🔧 **Three Ways to Use SAFLA**
 
 ### 1. **🔗 MCP Integration** (Recommended for Claude Code)
@@ -66,27 +89,6 @@ memory = HybridMemoryArchitecture()
 ai_brain = MetaCognitiveEngine()
 ```
 **Perfect for**: Custom applications, research projects, enterprise integration
-
-## 🏗️ **How SAFLA Works**
-
-### **🧠 Neural Memory System**
-SAFLA uses a hybrid neural architecture with multiple memory types:
-- **Vector Memory**: Stores embeddings for semantic similarity search
-- **Episodic Memory**: Remembers sequences of events and experiences  
-- **Semantic Memory**: Builds knowledge graphs of concepts and relationships
-- **Working Memory**: Manages active context with attention mechanisms
-
-### **🔄 Self-Learning Loop**
-1. **Experience**: Processes interactions and outcomes
-2. **Learn**: Identifies patterns and successful strategies  
-3. **Adapt**: Modifies behavior based on what works
-4. **Improve**: Gets better at similar tasks over time
-
-### **🛡️ Safety Framework**
-- **Constraint Engine**: Enforces safety rules and boundaries
-- **Risk Assessment**: Evaluates potential dangers before actions
-- **Rollback System**: Can undo changes if problems occur
-- **Emergency Stop**: Immediate halt capability for safety
 
 ## 🚀 **Quick Start Guide**
 
