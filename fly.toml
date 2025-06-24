@@ -1,6 +1,9 @@
 app = "safla"
 primary_region = "ord"
 
+[build]
+  dockerfile = "Dockerfile.fast"
+
 [experimental]
   auto_rollback = true
 
@@ -12,10 +15,8 @@ primary_region = "ord"
   PORT = "8080"
   PYTHONPATH = "/app"
   SAFLA_ENV = "production"
-  SAFLA_GPU_ENABLED = "true"
-  CUDA_VISIBLE_DEVICES = "0"
-  NVIDIA_VISIBLE_DEVICES = "all"
-  NVIDIA_DRIVER_CAPABILITIES = "compute,utility"
+  SAFLA_CONFIG = "/app/config/safla_config_extreme.json"
+  SAFLA_OPTIMIZATION_MODE = "extreme"
 
 [http_service]
   internal_port = 8080
@@ -33,7 +34,7 @@ primary_region = "ord"
     path = "/health"
 
 [vm]
-  size = "a100-40gb"
+  size = "performance-8x"
 
 [deploy]
   strategy = "immediate"
